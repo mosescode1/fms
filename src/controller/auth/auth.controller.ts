@@ -1,0 +1,10 @@
+
+
+
+
+class AuthController {}
+
+
+
+
+export {AuthController};
