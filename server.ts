@@ -1,4 +1,3 @@
-import app from "./src/app"
 import Config from "./src/config"
 
 process.on("unhandledRejection", (err: Error) => {
@@ -20,6 +19,9 @@ process.on("SIGINT", () => {
     console.log("shutting down gracefully")
     process.exit(0)
 })
+
+import app from "./src/app"
+
 
 const port = Config.port
 

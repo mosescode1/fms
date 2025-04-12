@@ -11,4 +11,4 @@ const catchAsync = (fn:Func) => {
 	}
 }
 
-export {catchAsync};
+export   { catchAsync };
