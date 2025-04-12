@@ -4,8 +4,11 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "deploy": "npx prisma migrate deploy",
+    "migrate": "npx prisma migrate dev",
+    "generate": "npx prisma generate",
     "start": "node build/server.js",
-    "build": "npx tsc"
+    "build": "npm install && npx tsc"
   },
   "repository": {
     "type": "git",
