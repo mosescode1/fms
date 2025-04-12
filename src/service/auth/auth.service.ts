@@ -31,7 +31,7 @@ class AuthService {
        }
     }
 
-    async createUser(data: Prisma.UsersCreateInput) {
+    async createUser(data:object) {
         try {
             return await this.userRepo.createUser(data);
         } catch (error) {

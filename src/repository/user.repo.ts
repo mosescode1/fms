@@ -4,7 +4,7 @@ import {Prisma} from "@prisma/client";
 
 class UserRepository {
 
-    async createUser(data:Prisma.UsersCreateInput) {
+    async createUser(data:any) {
        try{
            return await prisma.users.create({
                data,
@@ -15,7 +15,7 @@ class UserRepository {
        }
     }
 
-    async updateUser(id: string, data: Prisma.UsersUpdateInput) {
+    async updateUser(id: string, data:object) {
        try{
            return await prisma.users.update({
                where: {
