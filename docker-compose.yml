@@ -9,6 +9,19 @@ services:
     ports:
       - "5432:5432"
 
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gemz-app
+    environment:
+      DATABASE_URL: postgres://user:password@postgres:5432/gemz
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
+    networks:
+      - gemz-network
 
 networks:
   gemz-network:
