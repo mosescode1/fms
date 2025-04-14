@@ -8,7 +8,7 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install --quiet
 
-RUN npm run build
+RUN npx tsc
 
 COPY . .
 
