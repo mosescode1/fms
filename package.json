@@ -8,7 +8,7 @@
     "migrate": "npx prisma migrate dev",
     "generate": "npx prisma generate",
     "start": "node build/server.js",
-    "build": "npm run migrate && npm run generate"
+    "build": "npm run migrate dev && npm run generate"
   },
   "repository": {
     "type": "git",
