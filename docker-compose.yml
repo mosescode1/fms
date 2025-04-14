@@ -8,6 +8,8 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=gemz
+    ports:
+      - "5432:5432"
     volumes:
       - ./data:/data
     healthcheck:
