@@ -1,13 +1,22 @@
 services:
   postgres:
-    image: postgres:latest
+    image: postgres:alpine
     container_name: postgres
+    restart: always
+    shm_size: 256mb
     environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: gemz
-    ports:
-      - "5432:5432"
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=gemz
+    volumes:
+      - ./data:/data
+    healthcheck:
+      test: [ CMD-SHELL, pg_isready -U postgres ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - gemz-network
 
   app:
     build:
@@ -15,11 +24,12 @@ services:
       dockerfile: Dockerfile
     container_name: gemz-app
     environment:
-      DATABASE_URL: postgres://user:password@postgres:5432/gemz
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/gemz
     ports:
       - "3000:3000"
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     networks:
       - gemz-network
 

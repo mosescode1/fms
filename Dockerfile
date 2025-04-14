@@ -1,30 +1,39 @@
 # Build image
-FROM node:alpine as builder
+FROM node:22-alpine AS builder
 WORKDIR /app
 
 # Not sure if you will need this
 # RUN apk add --update openssl
 
 COPY package*.json ./
-RUN npm ci --quiet
+RUN npm install --quiet
 
-COPY ./prisma prisma
-COPY ./src src
-RUN npm run build
+COPY . .
 
 # Production image
+FROM node:22-alpine
 
-FROM node:alpine
+# Set the working directory
 WORKDIR /app
-ENV NODE_ENV production
 
+# Copy only the compiled build folder from the builder stage
+COPY --from=builder /app/build ./build
+
+# Copy environment variables
+COPY --from=builder /app/.env ./
+
+# Copy environment variables
+COPY --from=builder /app/.env ./build
+
+# Copy package.json (and optionally package-lock.json) for production dependency install
 COPY package*.json ./
-RUN npm ci --only=production --quiet
 
-COPY --chown=node:node --from=builder /app/prisma /app/prisma
-COPY --chown=node:node --from=builder /app/src /app/src
+# Install only production dependencies
+RUN npm install --omit=dev
+COPY --from=builder /app/prisma ./prisma
+RUN npm run generate
+# Expose the desired port (e.g., 3000)
+EXPOSE 3000
 
-USER node
-
-EXPOSE 8080
-CMD ["node", "src/index.js"]
+# Command to run the application
+CMD ["npm", "start"]
