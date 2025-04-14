@@ -7,7 +7,7 @@
     "deploy": "npx prisma migrate deploy",
     "migrate": "npx prisma migrate dev",
     "generate": "npx prisma generate",
-    "start": "node build/server.js",
+    "start": "npm run deploy && node build/server.js",
     "build": "tsc"
   },
   "repository": {

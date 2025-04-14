@@ -1,6 +1,3 @@
--- CreateEnum
-CREATE TYPE "MEMBER_ROLE" AS ENUM ('ADMIN', 'USER');
-
 -- CreateTable
 CREATE TABLE "Users" (
     "id" TEXT NOT NULL,
@@ -33,30 +30,6 @@ CREATE TABLE "Organization" (
     CONSTRAINT "Organization_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
-CREATE TABLE "Members" (
-    "id" TEXT NOT NULL,
-    "userId" VARCHAR(255) NOT NULL,
-    "userRole" "MEMBER_ROLE" NOT NULL DEFAULT 'USER',
-    "organizationId" VARCHAR(255) NOT NULL,
-
-    CONSTRAINT "Members_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "Files" (
-    "id" TEXT NOT NULL,
-
-    CONSTRAINT "Files_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "FilePermissions" (
-    "id" TEXT NOT NULL,
-
-    CONSTRAINT "FilePermissions_pkey" PRIMARY KEY ("id")
-);
-
 -- CreateIndex
 CREATE UNIQUE INDEX "Users_email_key" ON "Users"("email");
 
@@ -65,6 +38,3 @@ CREATE UNIQUE INDEX "Organization_organizationEmail_key" ON "Organization"("orga
 
 -- AddForeignKey
 ALTER TABLE "Organization" ADD CONSTRAINT "Organization_userId_fkey" FOREIGN KEY ("userId") REFERENCES "Users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "Members" ADD CONSTRAINT "Members_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "Organization"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
