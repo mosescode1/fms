@@ -32,6 +32,7 @@ COPY package*.json ./
 # Install only production dependencies
 RUN npm install --omit=dev
 COPY --from=builder /app/prisma ./prisma
+RUN npm run build
 # Expose the desired port (e.g., 3000)
 EXPOSE 3000
 
