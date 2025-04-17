@@ -1,4 +1,12 @@
 import Client, {FileInfo} from 'ssh2-sftp-client';
+import dotenv from "dotenv";
+dotenv.config();
+
+
+const VM_HOST="67.211.214.50";
+const VM_PORT=6942
+const VM_USERNAME="Administrator"
+const VM_PASSWORD="*%G#5cJq"
 
 class SftpClientService {
  private sftp: Client;
@@ -22,13 +30,21 @@ class SftpClientService {
   }
 
   constructor() {
-    this.envCheck();
+    // this.envCheck();
     this.sftp = new Client()
-    this.host = process.env.VM_HOST || process.env.SFTP_HOST;
-    this.port = Number(process.env.VM_PORT || process.env.SFTP_PORT) || 22;
-    this.username = process.env.VM_USERNAME || process.env.SFTP_USER;
-    this.password = process.env.VM_PASSWORD || process.env.SFTP_PASS;
-    this.rootPath = "F:";
+
+    // TODO : Uncomment the following lines to use environment variables for production
+    // this.host = process.env.VM_HOST || process.env.SFTP_HOST;
+    // this.port = Number(process.env.VM_PORT || process.env.SFTP_PORT) || 22;
+    // this.username = process.env.VM_USERNAME || process.env.SFTP_USER;
+    // this.password = process.env.VM_PASSWORD || process.env.SFTP_PASS;
+
+    // this is for testing purposes only
+    this.host = VM_HOST;
+    this.port = VM_PORT;
+    this.username = VM_USERNAME;
+    this.password = VM_PASSWORD;
+    this.rootPath = "C:";
   }
 
   private async _connect() {
@@ -76,11 +92,13 @@ class SftpClientService {
     return folders;
   }
 
-  async createFolder(remotePath:string) {
+  async createFolder(remotePath?:string) {
     let folderCreated = false;
     try {
       await this._connect();
-      await this.sftp.mkdir(remotePath, true);
+      if (remotePath) {
+        await this.sftp.mkdir(remotePath, true);
+      }
       folderCreated = true;
       await new Promise(resolve => setTimeout(resolve, 1000));
     } catch (error:any) {
@@ -153,4 +171,5 @@ class SftpClientService {
   }
 }
 
-const instance = new SftpClientService();
+const sftpClientService = new SftpClientService();
+export default sftpClientService;

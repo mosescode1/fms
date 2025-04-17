@@ -1,4 +1,4 @@
-import userRepo from "../../repository/user.repo";
+import userRepo from "../../repository/user/user.repo";
 
 
 class UserService {
@@ -9,6 +9,14 @@ class UserService {
             throw new Error("User not found");
         }
         return user;
+    }
+
+    async addMember(data: object) {
+        try {
+            // return await userRepo.addMember(data);
+        } catch (error) {
+            throw new Error("Error adding member");
+        }
     }
 
 
