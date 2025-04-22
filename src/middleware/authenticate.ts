@@ -25,6 +25,7 @@ const Authenticate = async (req:Request, _:Response, next:NextFunction) => {
         
         //TODO: check if user is a member or a user and validate the token
         // check for user with the id
+
         const user = await userRepo.findUserById(req.user.userId);
         // check if member exists
         // const member = await memberRepo.getMemberById(req.user.userId);

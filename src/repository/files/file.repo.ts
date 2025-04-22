@@ -143,6 +143,9 @@ class fileRepository {
             }
             await audit_logService.createAuditLog(auditLogData)
 
+            // TODO create folder in the vm root
+
+
             return updatedFolder;
         } catch (err) {
            throw new Error("failed ")

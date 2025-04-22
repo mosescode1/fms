@@ -34,6 +34,14 @@ class fileService {
             throw new Error(error.message);
         }
     }
+
+    async getFolderById(folderId: string) {
+        try {
+            return await fileRepo.getFolderById(folderId);
+        } catch (error:any) {
+            throw new Error(error.message);
+        }
+    }
 }
 
 

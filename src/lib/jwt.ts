@@ -5,6 +5,7 @@ import Config from "../config";
 
 class JwtFeature {
     static  signToken = (payload: object) => {
+        console.log(Config.jwt.accessSecretToken)
         if (!Config.jwt.accessSecretToken) throw new AppError({message:"Missing Access SecretToken", statusCode: 401});
         return jwt.sign( payload , Config.jwt.accessSecretToken, {
             expiresIn: Config.jwt.expiry as any,

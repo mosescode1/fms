@@ -95,6 +95,16 @@ class FileController{
             }
         });
     }
+
+
+    async getFolderById(req: Request, res: Response){
+        const data = await fileServiceInstance.getFolderById(req.params.folderId);
+        console.log(data)
+
+        res.status(200).json({
+            data
+        })
+    }
 }
 
 const fileController = new FileController();

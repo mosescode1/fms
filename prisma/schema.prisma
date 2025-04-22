@@ -38,6 +38,7 @@ enum Role {
 model Folders {
   id        String     @id @default(uuid())
   name      String
+  type      String     @default("folder")
   fullPath  String? // Path to the folder
   parentId  String? // Self-reference
   parent    Folders?   @relation("FolderToSubfolders", fields: [parentId], references: [id], onDelete: Cascade)
