@@ -11,6 +11,7 @@ RUN npm install --quiet
 
 COPY . .
 # Build the application
+RUN npx prisma generate
 RUN npx tsc
 
 # Production image
