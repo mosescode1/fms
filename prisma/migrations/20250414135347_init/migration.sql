@@ -30,20 +30,6 @@ CREATE TABLE "Organization" (
     CONSTRAINT "Organization_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
-CREATE TABLE "Files" (
-    "id" TEXT NOT NULL,
-
-    CONSTRAINT "Files_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "FilePermissions" (
-    "id" TEXT NOT NULL,
-
-    CONSTRAINT "FilePermissions_pkey" PRIMARY KEY ("id")
-);
-
 -- CreateIndex
 CREATE UNIQUE INDEX "Users_email_key" ON "Users"("email");
 

@@ -1,4 +1,4 @@
-import userRepo from "../../repository/user.repo";
+import userRepo from "../../repository/user/user.repo";
 import {AppError} from "../../lib";
 import userService from "../../service/user/user.service";
 

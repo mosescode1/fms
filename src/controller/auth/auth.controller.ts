@@ -77,7 +77,7 @@ class AuthController {
         };
 
         try{
-            await AuthService.createUser(user);
+            await AuthService.registerUser(user);
         }catch (err: any){
             throw new AppError({message: err.message, statusCode: 500});
         }
@@ -120,7 +120,10 @@ class AuthController {
         }
 
         // Generate JWT token
-        const token = await AuthService.generateToken({id: user.id});
+        const token = await AuthService.generateToken({
+            id: user.id,
+            loggedInAs: user.loggedInAs,
+        });
 
         // Set token in response header
         res.setHeader("Authorization", `Bearer ${token}`);

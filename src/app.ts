@@ -9,6 +9,8 @@ import {globalError} from "./controller/error/error.controller";
 import {AppError} from "./lib";
 import userRoutes from "./routes/userRoutes/user.routes";
 import organizationRoutes from "./routes/organizationRoutes/organization.routes";
+import filesRoutes from "./routes/filesRoutes/files.routes";
+import auditLogRoutes from "./routes/auditLog/audit.log";
 
 
 
@@ -40,7 +42,8 @@ app.get("/api/v1/health", (_, res) => {
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/user", userRoutes)
 app.use("/api/v1/organization", organizationRoutes)
-// app.use("/api/v1/files")
+app.use("/api/v1/files", filesRoutes)
+app.use("/api/v1/auditlog",auditLogRoutes)
 
 
 

@@ -15,51 +15,88 @@ datasource db {
 }
 
 model Users {
-  id           String         @id @default(uuid())
-  fullName     String         @db.VarChar(255)
-  email        String         @unique @db.VarChar(255)
-  phoneNumber  String         @db.VarChar(255)
-  password     String         @db.VarChar(255)
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
-  Organization Organization[]
+  id          String       @id @default(uuid())
+  fullName    String       @db.VarChar(255)
+  email       String       @unique @db.VarChar(255)
+  phoneNumber String       @db.VarChar(255)
+  password    String       @db.VarChar(255)
+  loggedInAs  Role         @default(USER)
+  parentId    String? // Self-reference
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  folders     Folders[]
+  files       Files[]
+  auditLog    AuditLog[]
+  permission  Permission[]
 }
 
-model Organization {
-  id                 String    @id @default(uuid())
-  userId             String    @db.VarChar(255)
-  user               Users     @relation(fields: [userId], references: [id])
-  organizationName   String?   @db.VarChar(255)
-  organizationEmail  String?   @unique @db.VarChar(255)
-  organizattionPhone String?   @db.VarChar(255)
-  organizationLogo   String?   @db.VarChar(255)
-  industry           String?   @db.VarChar(255)
-  location           String?   @db.VarChar(255)
-  country            String?   @db.VarChar(255)
-  state              String?   @db.VarChar(255)
-  city               String?   @db.VarChar(255)
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
-  Members            Members[]
-}
-
-enum MEMBER_ROLE {
-  ADMIN
+enum Role {
   USER
+  ADMIN
 }
 
-model Members {
-  id             String       @id @default(uuid())
-  userId         String       @db.VarChar(255)
-  userRole       MEMBER_ROLE  @default(USER)
-  organizationId String       @db.VarChar(255)
-  organization   Organization @relation(fields: [organizationId], references: [id])
+model Folders {
+  id        String     @id @default(uuid())
+  name      String
+  fullPath  String? // Path to the folder
+  parentId  String? // Self-reference
+  parent    Folders?   @relation("FolderToSubfolders", fields: [parentId], references: [id], onDelete: Cascade)
+  children  Folders[]  @relation("FolderToSubfolders") // Subfolders for self-referencing
+  files     Files[] // Files in this folder
+  usersId   String
+  user      Users      @relation(fields: [usersId], references: [id])
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  AuditLog  AuditLog[]
 }
 
 model Files {
-  id String @id @default(uuid())
+  id         String     @id @default(uuid())
+  fileName   String     @db.VarChar(255)
+  fileType   String     @db.VarChar(255)
+  fileSize   Int
+  filePath   String     @db.VarChar(255)
+  encoding   String     @db.VarChar(255)
+  Folder     Folders?   @relation(fields: [folderId], references: [id])
+  folderId   String?
+  Users      Users      @relation(fields: [usersId], references: [id])
+  usersId    String
+  AuditLog   AuditLog[]
+  uploadedAt DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
 }
 
-model FilePermissions {
-  id String @id @default(uuid())
+model Permission {
+  id             String           @id @default(uuid())
+  permissionType PermissionType[]
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  Users          Users?           @relation(fields: [usersId], references: [id])
+  usersId        String?
+}
+
+enum PermissionType {
+  READ
+  WRITE
+  DELETE
+}
+
+enum Action {
+  CREATE
+  READ
+  UPDATE
+  DELETE
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  action    Action
+  fileId    String?
+  file      Files?   @relation(fields: [fileId], references: [id])
+  folderId  String?
+  folder    Folders? @relation(fields: [folderId], references: [id])
+  usersId   String
+  users     Users    @relation(fields: [usersId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

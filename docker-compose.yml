@@ -8,6 +8,8 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=gemz
+    ports:
+      - "5432:5432"
     volumes:
       - ./data:/data
     healthcheck:
@@ -23,8 +25,6 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: gemz-app
-    environment:
-      DATABASE_URL: postgres://postgres:postgres@postgres:5432/gemz
     ports:
       - "3000:3000"
     depends_on:

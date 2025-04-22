@@ -1,6 +1,5 @@
-import UserRepo from "../../repository/user.repo";
+import UserRepo from "../../repository/user/user.repo";
 import bcrypt from "bcrypt";
-import {Prisma} from "@prisma/client";
 import {JwtFeature} from "../../lib/jwt";
 import {AppError} from "../../lib";
 
@@ -22,18 +21,17 @@ class AuthService {
         return await this.userRepo.findUserByEmail(email);
     }
 
-
     async generateToken(payload: object): Promise<string> {
        try{
-             return JwtFeature.signToken({userId: payload});
+             return JwtFeature.signToken(payload);
        }catch (err: any) {
                 throw new AppError({message: err.message, statusCode: 500});
        }
     }
 
-    async createUser(data:object) {
+    async registerUser(data:object) {
         try {
-            return await this.userRepo.createUser(data);
+            return await this.userRepo.registerUser(data);
         } catch (error) {
             throw new Error("Error creating user");
         }

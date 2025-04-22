@@ -8,7 +8,10 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install --quiet
 
+
 COPY . .
+# Build the application
+RUN npx tsc
 
 # Production image
 FROM node:22-alpine
@@ -31,7 +34,7 @@ COPY package*.json ./
 # Install only production dependencies
 RUN npm install --omit=dev
 COPY --from=builder /app/prisma ./prisma
-RUN npm run generate
+RUN npx prisma generate
 # Expose the desired port (e.g., 3000)
 EXPOSE 3000
 
