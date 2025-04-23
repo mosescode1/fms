@@ -26,7 +26,7 @@ services:
       dockerfile: Dockerfile
     container_name: gemz-app
     ports:
-      - "3000:3000"
+      - "3000:3002"
     depends_on:
       postgres:
         condition: service_healthy
