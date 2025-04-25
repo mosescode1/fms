@@ -1,23 +1,99 @@
 import fileRepo from "../../repository/files/file.repo";
+import sftpClientService from '../../repository/files/sftpClientService';
+import {AppError} from "../../lib"
+import streamifier from 'streamifier';
+
+type FileData = {
+    name: string;
+    mimetype: string;
+    size: number;
+    localSource: Buffer;
+    encoding: string;
+    folderId?: string;
+    remotePath?: string;
+}
+
+
+
 
 class fileService {
 
-    async createFolder(folderData: object) {
+    private rootPath= process.env.VM_ROOT_PATH || process.env.SFTP_ROOT_PATH || "/";
+    /**
+     * Get the full path of the parent folder.
+     * @param parentId - The ID of the parent folder.
+     * @param folderName - The name of the folder to be created.
+     * @returns The full path of the parent folder.
+     * */
+
+    private async getParentFolderPath(parentId: string, folderName: string): Promise<string> {
+        const parentFolder = await fileRepo.getFolderById(parentId);
+        if (!parentFolder) {
+            throw new AppError({ message: "Parent folder not found", statusCode: 404 });
+        }
+        return `${parentFolder.fullPath}/${folderName}`;
+    }
+
+    /**
+     * Creates a folder in the database and on the server.
+     * @param folderData - The data for the folder to be created.
+     * @returns The created folder object.
+     * @throws AppError if the folder already exists or if there is an error during creation.
+     */
+
+   async createFolder(folderData: any) {
         try {
+
+            if (!folderData.userId) {
+                folderData["remotePath"] = this.rootPath + `/${folderData.folderName}`;
+            }else{
+                folderData["remotePath"]= await this.getParentFolderPath(folderData.parentId, folderData.folderName)
+            }
+
+            console.log("folderData",folderData.remotePath)
+
+            // Check if the folder already exists
+            if (await fileRepo.getFolderByPath(folderData.remotePath)) {
+                throw new AppError({ message: "Folder already exists", statusCode: 409 });
+            }
+
+            // Create the folder on the server
+            await sftpClientService.createFolder(folderData.remotePath);
+
+            // Save the folder in the repository
             return await fileRepo.createFolder(folderData);
-        } catch (error:any) {
-            throw new Error(error.message);
+        } catch (error: any) {
+            throw new AppError({ message: error.message, statusCode: error.statusCode || 500 });
         }
     }
 
-    async uploadFile(fileData: object) {
-        try {
-            return await fileRepo.createFile(fileData);
-        } catch (error:any) {
-            throw new Error(error.message);
-        }
 
-    }
+
+ async uploadFile(fileData: FileData) {
+
+     try {
+         const remotePath = fileData.folderId
+             ? await this.getParentFolderPath(fileData.folderId, fileData.name)
+             : `/${fileData.name}`;
+
+         fileData.remotePath = this.rootPath + remotePath;
+
+         // Check if the file already exists
+         if (await fileRepo.getFileByPath(fileData.remotePath)) {
+             throw new AppError({ message: "File already exists", statusCode: 409 });
+         }
+
+         // steamifier buffer
+         const stream = streamifier.createReadStream(fileData.localSource);
+
+         // create file on the server
+         await sftpClientService.uploadFile(stream, fileData.remotePath);
+
+         return await fileRepo.createFile(fileData);
+     } catch (error: any) {
+         throw new AppError({ message: error.message, statusCode: error.statusCode || 500 });
+     }
+ }
 
     async allFiles() {
         try {

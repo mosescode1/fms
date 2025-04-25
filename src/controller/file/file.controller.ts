@@ -51,9 +51,6 @@ class FileController{
         // TODO: get the remote path from the request body
         let remotePath = '/';
 
-
-        // if (req.body.remotePath) remotePath = req.body.remotePath;
-
         // TODO: create the file in the database
         const fileData = {
             name: originalname,
@@ -65,10 +62,8 @@ class FileController{
             localSource: buffer,
             userId: req.user.userId,
         };
+
         await fileServiceInstance.uploadFile(fileData);
-
-        // TODO: upload the file to the remote server
-
 
         res.status(200).json({
             message: 'File uploaded to remote server directly from memory',

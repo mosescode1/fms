@@ -15,19 +15,20 @@ datasource db {
 }
 
 model Users {
-  id          String       @id @default(uuid())
-  fullName    String       @db.VarChar(255)
-  email       String       @unique @db.VarChar(255)
-  phoneNumber String       @db.VarChar(255)
-  password    String       @db.VarChar(255)
-  loggedInAs  Role         @default(USER)
-  parentId    String? // Self-reference
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  folders     Folders[]
-  files       Files[]
-  auditLog    AuditLog[]
-  permission  Permission[]
+  id             String           @id @default(uuid())
+  fullName       String           @db.VarChar(255)
+  email          String           @unique @db.VarChar(255)
+  phoneNumber    String           @db.VarChar(255)
+  password       String           @db.VarChar(255)
+  loggedInAs     Role             @default(USER)
+  permission     PermissionType   @default(ADMIN)
+  parentId       String? // Self-reference
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  folders        Folders[]
+  files          Files[]
+  auditLog       AuditLog[]
+  PermissionPath PermissionPath[]
 }
 
 enum Role {
@@ -36,50 +37,43 @@ enum Role {
 }
 
 model Folders {
-  id        String     @id @default(uuid())
-  name      String
-  type      String     @default("folder")
-  fullPath  String? // Path to the folder
-  parentId  String? // Self-reference
-  parent    Folders?   @relation("FolderToSubfolders", fields: [parentId], references: [id], onDelete: Cascade)
-  children  Folders[]  @relation("FolderToSubfolders") // Subfolders for self-referencing
-  files     Files[] // Files in this folder
-  usersId   String
-  user      Users      @relation(fields: [usersId], references: [id])
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  AuditLog  AuditLog[]
+  id             String           @id @default(uuid())
+  name           String
+  type           String           @default("folder")
+  fullPath       String? // Path to the folder
+  parentId       String? // Self-reference
+  parent         Folders?         @relation("FolderToSubfolders", fields: [parentId], references: [id], onDelete: Cascade)
+  children       Folders[]        @relation("FolderToSubfolders") // Subfolders for self-referencing
+  files          Files[] // Files in this folder
+  usersId        String
+  user           Users            @relation(fields: [usersId], references: [id])
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  AuditLog       AuditLog[]
+  PermissionPath PermissionPath[]
 }
 
 model Files {
-  id         String     @id @default(uuid())
-  fileName   String     @db.VarChar(255)
-  fileType   String     @db.VarChar(255)
-  fileSize   Int
-  filePath   String     @db.VarChar(255)
-  encoding   String     @db.VarChar(255)
-  Folder     Folders?   @relation(fields: [folderId], references: [id])
-  folderId   String?
-  Users      Users      @relation(fields: [usersId], references: [id])
-  usersId    String
-  AuditLog   AuditLog[]
-  uploadedAt DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
-}
-
-model Permission {
   id             String           @id @default(uuid())
-  permissionType PermissionType[]
-  createdAt      DateTime         @default(now())
+  fileName       String           @db.VarChar(255)
+  fileType       String           @db.VarChar(255)
+  fileSize       Int
+  filePath       String           @db.VarChar(255)
+  encoding       String           @db.VarChar(255)
+  Folder         Folders?         @relation(fields: [folderId], references: [id])
+  folderId       String?
+  Users          Users            @relation(fields: [usersId], references: [id])
+  usersId        String
+  AuditLog       AuditLog[]
+  uploadedAt     DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
-  Users          Users?           @relation(fields: [usersId], references: [id])
-  usersId        String?
+  PermissionPath PermissionPath[]
 }
 
 enum PermissionType {
-  READ
-  WRITE
-  DELETE
+  ReadAndWrite
+  ReadOnly
+  ADMIN
 }
 
 enum Action {
@@ -87,6 +81,17 @@ enum Action {
   READ
   UPDATE
   DELETE
+}
+
+model PermissionPath {
+  id       String         @id @default(uuid())
+  type     PermissionType
+  usersId  String
+  users    Users          @relation(fields: [usersId], references: [id])
+  folderId String?
+  folder   Folders?       @relation(fields: [folderId], references: [id])
+  fileId   String?
+  file     Files?         @relation(fields: [fileId], references: [id])
 }
 
 model AuditLog {

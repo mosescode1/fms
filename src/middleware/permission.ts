@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { AppError } from "../lib";
 
-const onlyPermit = (...roles: string[]) => {
+const checkPermission = (...roles: string[]) => {
     return (req: Request, _: Response, next: NextFunction) => {
         if (!roles.includes(req.user.loggedInAs)) {
             return next(
@@ -16,5 +16,5 @@ const onlyPermit = (...roles: string[]) => {
 };
 
 module.exports = {
-    onlyPermit,
+    checkPermission,
 };

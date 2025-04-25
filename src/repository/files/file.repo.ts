@@ -2,7 +2,7 @@ import {prisma} from "../../prisma/prisma.client";
 import audit_logService from "../../service/auditLog/audit_log.service";
 
 class fileRepository {
-
+    rootPath = process.env.VM_ROOT_PATH || process.env.SFTP_ROOT_PATH || "/";
 
     private async buildFullPath(folderId: string): Promise<string> {
         const segments: string[] = [];
@@ -68,7 +68,6 @@ class fileRepository {
 
 
     async createFile(fileData: any): Promise<any> {
-        console.log("fileData", fileData)
         try{
             // Create the file in the database
             const file = await prisma.files.create({
@@ -84,7 +83,7 @@ class fileRepository {
             })
 
             // TODO: update the file path
-            const fullPath = await this.buildFileFullPath(file.id);
+            const fullPath = this.rootPath + await this.buildFileFullPath(file.id);
             const updatedFile = await prisma.files.update({
                 where: { id: file.id },
                 data: {
@@ -93,8 +92,6 @@ class fileRepository {
             })
 
             // TODO: upload the file to the remote server
-
-
 
             // TODO: add the file to the audit log
             const auditLogData = {
@@ -127,7 +124,7 @@ class fileRepository {
             });
 
             // Update fullPath
-            const fullPath = await this.buildFullPath(folder.id);
+            const fullPath = this.rootPath +  await this.buildFullPath(folder.id);
             const updatedFolder =  await prisma.folders.update({
                 where: { id: folder.id },
                 data: {
@@ -142,7 +139,6 @@ class fileRepository {
                 usersId: userId,
             }
             await audit_logService.createAuditLog(auditLogData)
-
             // TODO create folder in the vm root
 
 
@@ -223,6 +219,21 @@ class fileRepository {
         }
     }
 
+    async getFolderByPath(fullPath:string): Promise<any> {
+        return await prisma.folders.findFirst({
+            where: {
+                fullPath: fullPath
+            }
+        })
+    }
+
+    async getFileByPath(remotePath: string) {
+        return await prisma.files.findFirst({
+            where: {
+                filePath: remotePath
+            }
+        })
+    }
 }
 
 
