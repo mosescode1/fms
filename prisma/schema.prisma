@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
   output   = "../node_modules/.prisma/client"
@@ -14,66 +8,93 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Users {
-  id             String           @id @default(uuid())
-  fullName       String           @db.VarChar(255)
-  email          String           @unique @db.VarChar(255)
-  phoneNumber    String           @db.VarChar(255)
-  password       String           @db.VarChar(255)
-  loggedInAs     Role             @default(USER)
-  permission     PermissionType   @default(ADMIN)
-  parentId       String? // Self-reference
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
-  folders        Folders[]
-  files          Files[]
-  auditLog       AuditLog[]
-  PermissionPath PermissionPath[]
+// Unified account model for both admins and members
+model Account {
+  id          String   @id @default(uuid())
+  fullName    String   @db.VarChar(255)
+  email       String   @unique @db.VarChar(255)
+  phoneNumber String?  @db.VarChar(255)
+  password    String   @db.VarChar(255)
+  role        Role     @default(ADMIN)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  files       File[]
+  folders     Folder[]
+  permissions Permission[]
+  auditLogs   AuditLog[]
 }
 
 enum Role {
-  USER
   ADMIN
+  MEMBER
 }
 
-model Folders {
-  id             String           @id @default(uuid())
-  name           String
-  type           String           @default("folder")
-  fullPath       String? // Path to the folder
-  parentId       String? // Self-reference
-  parent         Folders?         @relation("FolderToSubfolders", fields: [parentId], references: [id], onDelete: Cascade)
-  children       Folders[]        @relation("FolderToSubfolders") // Subfolders for self-referencing
-  files          Files[] // Files in this folder
-  usersId        String
-  user           Users            @relation(fields: [usersId], references: [id])
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
-  AuditLog       AuditLog[]
-  PermissionPath PermissionPath[]
+// Folder model with self-referencing hierarchy
+model Folder {
+  id       String   @id @default(uuid())
+  name     String
+  type     String   @default("folder")
+  fullPath String? // optional: for fast search
+  parentId String?
+  parent   Folder?  @relation("FolderHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children Folder[] @relation("FolderHierarchy")
+
+  files       File[]
+  permissions Permission[]
+  accountId   String?
+  owner       Account?     @relation(fields: [accountId], references: [id])
+  auditLogs   AuditLog[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
-model Files {
-  id             String           @id @default(uuid())
-  fileName       String           @db.VarChar(255)
-  fileType       String           @db.VarChar(255)
-  fileSize       Int
-  filePath       String           @db.VarChar(255)
-  encoding       String           @db.VarChar(255)
-  Folder         Folders?         @relation(fields: [folderId], references: [id])
-  folderId       String?
-  Users          Users            @relation(fields: [usersId], references: [id])
-  usersId        String
-  AuditLog       AuditLog[]
-  uploadedAt     DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
-  PermissionPath PermissionPath[]
+// File model tied to folders and accounts
+model File {
+  id       String @id @default(uuid())
+  fileName String @db.VarChar(255)
+  fileType String @db.VarChar(255)
+  fileSize Int
+  filePath String @db.VarChar(255)
+  encoding String @db.VarChar(255)
+
+  folderId String?
+  folder   Folder? @relation(fields: [folderId], references: [id])
+
+  accountId String?
+  owner     Account? @relation(fields: [accountId], references: [id])
+
+  auditLogs AuditLog[]
+
+  uploadedAt DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+// Permission model with polymorphic targets (folder/file)
+model Permission {
+  id         String         @id @default(uuid())
+  type       PermissionType
+  targetId   String // ID of the folder or file
+  folderPath String? // optional: for fast search
+  targetType ResourceType
+  accountId  String
+  account    Account        @relation(fields: [accountId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  Folder    Folder?  @relation(fields: [folderId], references: [id])
+  folderId  String?
 }
 
 enum PermissionType {
-  ReadAndWrite
   ReadOnly
-  ADMIN
+  ReadAndWrite
+}
+
+enum ResourceType {
+  FOLDER
+  FILE
 }
 
 enum Action {
@@ -83,26 +104,22 @@ enum Action {
   DELETE
 }
 
-model PermissionPath {
-  id       String         @id @default(uuid())
-  type     PermissionType
-  usersId  String
-  users    Users          @relation(fields: [usersId], references: [id])
-  folderId String?
-  folder   Folders?       @relation(fields: [folderId], references: [id])
-  fileId   String?
-  file     Files?         @relation(fields: [fileId], references: [id])
-}
-
+// Audit log with polymorphic tracking
 model AuditLog {
-  id        String   @id @default(uuid())
-  action    Action
-  fileId    String?
-  file      Files?   @relation(fields: [fileId], references: [id])
-  folderId  String?
-  folder    Folders? @relation(fields: [folderId], references: [id])
-  usersId   String
-  users     Users    @relation(fields: [usersId], references: [id])
+  id         String       @id @default(uuid())
+  action     Action
+  targetId   String // Folder or File ID
+  targetType ResourceType
+  actorId    String
+  actor      Account      @relation(fields: [actorId], references: [id])
+
+  ipAddress String?
+  userAgent String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  Folder    Folder?  @relation(fields: [folderId], references: [id])
+  folderId  String?
+  File      File?    @relation(fields: [fileId], references: [id])
+  fileId    String?
 }

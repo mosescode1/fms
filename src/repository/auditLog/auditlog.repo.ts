@@ -15,9 +15,9 @@ class AuditlogRepo{
         try{
             return await prisma.auditLog.findMany({
                 include:{
-                    users: true,
-                    folder: true,
-                    file:true
+                    actor: true,
+                    Folder: true,
+                    File:true,
                 },
                 orderBy:{
                     createdAt: 'desc'
@@ -35,9 +35,9 @@ class AuditlogRepo{
                     id,
                 },
                 include:{
-                    users: true,
-                    folder: true,
-                    file:true
+                    actor: true,
+                    Folder: true,
+                    File:true
                 }
             });
 

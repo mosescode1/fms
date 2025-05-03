@@ -7,7 +7,7 @@ class fileRepository {
     private async buildFullPath(folderId: string): Promise<string> {
         const segments: string[] = [];
 
-        let current = await prisma.folders.findUnique({
+        let current = await prisma.folder.findUnique({
             where: { id: folderId },
             select: { name: true, parentId: true },
         });
@@ -15,7 +15,7 @@ class fileRepository {
         while (current) {
             segments.unshift(current.name); // Add current folder to the front
             if (!current.parentId) break;   // If no parent, it's the root — stop here
-            current = await prisma.folders.findUnique({
+            current = await prisma.folder.findUnique({
                 where: { id: current.parentId },
                 select: { name: true, parentId: true },
             });
@@ -28,21 +28,21 @@ class fileRepository {
         const fullPath = await this.buildFullPath(folderId);
 
         // 1. Update this folder
-        await prisma.folders.update({
+        await prisma.folder.update({
             where: { id: folderId },
             data: { fullPath },
         });
 
-        // 2. Update all files directly in this folder
-        await prisma.files.updateMany({
+        // 2. Update all file directly in this folder
+        await prisma.file.updateMany({
             where: { folderId },
             data: {
                 filePath: fullPath,
             }, // assuming file has a fullPath field
         });
 
-        // 3. Get and recursively update all child folders
-        const children = await prisma.folders.findMany({
+        // 3. Get and recursively update all child folder
+        const children = await prisma.folder.findMany({
             where: { parentId: folderId },
             select: { id: true },
         });
@@ -53,7 +53,7 @@ class fileRepository {
     }
 
     async  buildFileFullPath(fileId: string): Promise<string> {
-        const file = await prisma.files.findUnique({
+        const file = await prisma.file.findUnique({
             where: { id: fileId },
             select: { fileName: true, folderId: true },
         });
@@ -67,24 +67,36 @@ class fileRepository {
     }
 
 
-    async createFile(fileData: any): Promise<any> {
+    async uploadFile(fileData: any): Promise<any> {
         try{
+
+            // check user creating the file
+            const account = await  prisma.account.findFirst(
+                {
+                    where: {
+                        id : fileData.creatorId
+                    }
+                }
+            )
+
+
+
             // Create the file in the database
-            const file = await prisma.files.create({
+            const file = await prisma.file.create({
                 data: {
                     fileName: fileData.name,
                     fileType: fileData.mimetype,
                     fileSize: fileData.size,
                     filePath: "", // temporary file path
                     encoding: fileData.encoding,
-                    usersId: fileData.userId,
+                    accountId: account ? account.id.toString() : null,
                     folderId: fileData.folderId,
                 }
             })
 
             // TODO: update the file path
             const fullPath = this.rootPath + await this.buildFileFullPath(file.id);
-            const updatedFile = await prisma.files.update({
+            const updatedFile = await prisma.file.update({
                 where: { id: file.id },
                 data: {
                     filePath: fullPath,
@@ -96,9 +108,10 @@ class fileRepository {
             // TODO: add the file to the audit log
             const auditLogData = {
                 action: "CREATE",
+                actorId: file.accountId,
+                targetId : file.id,
+                targetType: "FILE",
                 fileId: file.id,
-                usersId: file.usersId,
-                folderId: file.folderId,
             }
             await audit_logService.createAuditLog(auditLogData)
             return updatedFile;
@@ -114,18 +127,26 @@ class fileRepository {
         const { folderName, parentId, userId } = folderData;
 
         try {
-            const folder = await prisma.folders.create({
+            // find user or member with that id
+            const user = await prisma.account.findFirst({
+                where:{
+                    id: userId,
+                }
+            })
+
+
+            const folder = await prisma.folder.create({
                 data: {
                     name: folderName,
                     parentId: parentId ?? null,
-                    usersId: userId,
+                    accountId: user ? user.id : null,
                     fullPath: '', // temporary
                 },
             });
 
             // Update fullPath
             const fullPath = this.rootPath +  await this.buildFullPath(folder.id);
-            const updatedFolder =  await prisma.folders.update({
+            const updatedFolder =  await prisma.folder.update({
                 where: { id: folder.id },
                 data: {
                     fullPath:fullPath,
@@ -135,8 +156,10 @@ class fileRepository {
             // TODO: add the folder to the audit log
             const auditLogData = {
                 action: "CREATE",
+                targetId: folder.id,
+                actorId: user ? user.id : null,
+                targetType: "FOLDER",
                 folderId: folder.id,
-                usersId: userId,
             }
             await audit_logService.createAuditLog(auditLogData)
             // TODO create folder in the vm root
@@ -152,7 +175,7 @@ class fileRepository {
         const { name, newParentId, id } = folderData;
 
         try {
-            const folder = await prisma.folders.update({
+            const folder = await prisma.folder.update({
                 where: { id },
                 data: {
                     name,
@@ -170,7 +193,7 @@ class fileRepository {
 
     async allFiles(): Promise<any[]> {
         try {
-            return await prisma.files.findMany({
+            return await prisma.file.findMany({
                 orderBy:{
                     uploadedAt: 'desc'
                 }
@@ -182,9 +205,9 @@ class fileRepository {
 
 
     async allFolders(): Promise<any[]> {
-        // Simulate fetching all folders from a database
+        // Simulate fetching all folder from a database
        try{
-            return await prisma.folders.findMany({
+            return await prisma.folder.findMany({
                 where:{
                     parentId: null,
                 }
@@ -196,7 +219,7 @@ class fileRepository {
 
     async getFolderById(folderId: string): Promise<any> {
         try {
-            return await prisma.folders.findUnique({
+            return await prisma.folder.findUnique({
                 where: { id: folderId },
                 include: {
                     files: true,
@@ -211,7 +234,7 @@ class fileRepository {
 
     async getFileById(fileId: string): Promise<any> {
         try {
-            return await prisma.files.findUnique({
+            return await prisma.file.findUnique({
                 where: { id: fileId },
             });
         } catch (error:any) {
@@ -220,7 +243,7 @@ class fileRepository {
     }
 
     async getFolderByPath(fullPath:string): Promise<any> {
-        return await prisma.folders.findFirst({
+        return await prisma.folder.findFirst({
             where: {
                 fullPath: fullPath
             }
@@ -228,7 +251,7 @@ class fileRepository {
     }
 
     async getFileByPath(remotePath: string) {
-        return await prisma.files.findFirst({
+        return await prisma.file.findFirst({
             where: {
                 filePath: remotePath
             }

@@ -2,6 +2,7 @@ import fileRepo from "../../repository/files/file.repo";
 import sftpClientService from '../../repository/files/sftpClientService';
 import {AppError} from "../../lib"
 import streamifier from 'streamifier';
+import Readable from "stream"
 
 type FileData = {
     name: string;
@@ -44,13 +45,11 @@ class fileService {
    async createFolder(folderData: any) {
         try {
 
-            if (!folderData.userId) {
+            if (!folderData.parentId) {
                 folderData["remotePath"] = this.rootPath + `/${folderData.folderName}`;
             }else{
                 folderData["remotePath"]= await this.getParentFolderPath(folderData.parentId, folderData.folderName)
             }
-
-            console.log("folderData",folderData.remotePath)
 
             // Check if the folder already exists
             if (await fileRepo.getFolderByPath(folderData.remotePath)) {
@@ -58,6 +57,7 @@ class fileService {
             }
 
             // Create the folder on the server
+            // TODO comeback to this after server is up
             await sftpClientService.createFolder(folderData.remotePath);
 
             // Save the folder in the repository
@@ -69,27 +69,37 @@ class fileService {
 
 
 
- async uploadFile(fileData: FileData) {
+ async uploadFile(fileData:any) {
+       let remotePath;
 
      try {
-         const remotePath = fileData.folderId
-             ? await this.getParentFolderPath(fileData.folderId, fileData.name)
-             : `/${fileData.name}`;
 
-         fileData.remotePath = this.rootPath + remotePath;
+         if (fileData.folderId){
+             remotePath = await this.getParentFolderPath(fileData.folderId, fileData.name)
+         }else{
+             remotePath = this.rootPath;
+         }
+
+         fileData.remotePath = remotePath;
 
          // Check if the file already exists
          if (await fileRepo.getFileByPath(fileData.remotePath)) {
              throw new AppError({ message: "File already exists", statusCode: 409 });
          }
 
+
+
          // steamifier buffer
-         const stream = streamifier.createReadStream(fileData.localSource);
+         // const stream = streamifier.createReadStream(fileData.localSource);
+
+         // const stream = Readable.from(fileData.localSource, { highWaterMark: 64 * 1024 }); //
+
 
          // create file on the server
+         // TODO come back to this when server is up
          await sftpClientService.uploadFile(stream, fileData.remotePath);
 
-         return await fileRepo.createFile(fileData);
+         return await fileRepo.uploadFile(fileData);
      } catch (error: any) {
          throw new AppError({ message: error.message, statusCode: error.statusCode || 500 });
      }
@@ -118,6 +128,19 @@ class fileService {
             throw new Error(error.message);
         }
     }
+
+    async getRootFolderPermissionLevel(folderPath: string[]) {
+        try {
+            const allFoldersByPath = await Promise.all(
+                folderPath.map(path => fileRepo.getFolderByPath(path))
+            );
+            return allFoldersByPath;
+        } catch (error: any) {
+            console.error("Error fetching folders by path", error);
+            throw new Error(error.message);
+        }
+    }
+
 }
 
 

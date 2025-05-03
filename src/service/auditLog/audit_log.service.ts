@@ -6,9 +6,11 @@ class AuditLogService {
         try {
             const validData = {
                 action: auditLogData.action,
-                usersId: auditLogData.usersId,
-                fileId: auditLogData.fileId,
+                actorId: auditLogData.actorId,
+                targetId: auditLogData.targetId,
+                targetType: auditLogData.targetType,
                 folderId: auditLogData.folderId,
+                fileId: auditLogData.fileId,
             }
             return await auditlogRepo.createAuditLog(validData);
         } catch (error:any) {
@@ -21,7 +23,7 @@ class AuditLogService {
         try {
             const res = await auditlogRepo.allAuditLogs();
             return res.map((auditLog: any) => {
-                delete auditLog.users.password;
+                (auditLog.actor.password) = undefined;
                 return {
                     ...auditLog,
                 }

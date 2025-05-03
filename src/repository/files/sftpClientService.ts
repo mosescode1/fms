@@ -18,6 +18,22 @@ interface PoolOptions {
 	retryDelay?: number;
 }
 
+
+function timeout<T>(promise: Promise<T>, ms: number, errorMessage: string): Promise<T> {
+	let timeoutId: NodeJS.Timeout;
+	const timeoutPromise = new Promise<never>((_, reject) => {
+		timeoutId = setTimeout(() => reject(new Error(errorMessage)), ms);
+	});
+
+	return Promise.race([
+		promise.then((value) => {
+			clearTimeout(timeoutId);
+			return value;
+		}),
+		timeoutPromise,
+	]);
+}
+
 class SftpConnectionPoolService {
 	private readonly config: SftpConfig;
 	private readonly pool: Pool<Client>;
@@ -77,9 +93,10 @@ class SftpConnectionPoolService {
 
 	private async useClient<T>(callback: (client: Client) => Promise<T>): Promise<T> {
 		const client = await this.pool.acquire();
-
 		try {
-			return await this.retryWithBackoff(() => callback(client));
+			return await this.retryWithBackoff(() =>
+				timeout(callback(client), 30000, 'SFTP operation timed out') // ⏱️ 30s hard timeout
+			);
 		} finally {
 			await this.pool.release(client);
 		}

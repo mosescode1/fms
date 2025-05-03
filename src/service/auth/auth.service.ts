@@ -40,6 +40,7 @@ class AuthService {
     async verifyPassword(userPassword:string, hashPassword:string) {
         return await bcrypt.compare(userPassword, hashPassword);
     }
+
 }
 
 

@@ -15,23 +15,36 @@ const Authenticate = async (req:Request, _:Response, next:NextFunction) => {
     // VERIFY TOKEN: verify token
     try {
         const decoded = JwtFeature.verifyToken(token);
-
-        if (typeof decoded !== "string") {
-            req.user ={
-                userId: decoded.id,
-                loggedInAs: decoded.loggedInAs,
-            }
+        if (typeof decoded === "string") {
+            throw new AppError({message: decoded, statusCode: 403});
         }
+
+
         
         //TODO: check if user is a member or a user and validate the token
         // check for user with the id
 
-        const user = await userRepo.findUserById(req.user.userId);
-        // check if member exists
+        const user = await userRepo.findUserById(decoded.id);
+        if (user && decoded.id !== user.id) {
+            throw new AppError({message:"Invalid Token", statusCode: 401})
+        }
+
+        if (user && decoded.role !== user.role){
+            throw new AppError({message: "Invalid Role", statusCode:401})
+        }
+
+        req.user = {
+            userId: decoded.id,
+            role: decoded.role
+        }
+
+        // check if user exists
         // const member = await memberRepo.getMemberById(req.user.userId);
         if (!user) {
-            throw new AppError({message: "User with this token no longer exists", statusCode: 404});
+            throw new AppError({message: "User with this Account doesn't exists", statusCode: 404});
         }
+
+
         next();
     } catch (error: any) {
         throw new AppError({message: error.message, statusCode: 403});

@@ -25,6 +25,8 @@ class FileController{
             parentId: parentId,
             userId: req.user.userId,
         };
+
+        console.log("folderData", folderData)
         const folder = await fileServiceInstance.createFolder(folderData);
 
         res.status(200).json({
@@ -94,10 +96,23 @@ class FileController{
 
     async getFolderById(req: Request, res: Response){
         const data = await fileServiceInstance.getFolderById(req.params.folderId);
-        console.log(data)
-
         res.status(200).json({
             data
+        })
+    }
+
+    async getRootFolderPermissionLevel(req: Request, res: Response){
+        const folderPath = req.user.permissionLevel ?? [];
+        if (!req.user.permissionLevel) {
+            throw new AppError({ message: 'Permission level not set on user', statusCode: 404 });
+        }
+
+        const folders = await fileServiceInstance.getRootFolderPermissionLevel(folderPath);
+        res.status(200).json({
+            status: "success",
+            data:{
+                folders
+            }
         })
     }
 }

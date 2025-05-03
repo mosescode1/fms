@@ -11,25 +11,13 @@ class UserRepository {
      */
     async registerUser(data:any) {
        try{
-           return await prisma.users.create({
+           return await prisma.account.create({
                data,
            })
        }catch(err: any){
            console.log("user repo")
            throw new Error(err.message)
        }
-    }
-
-
-    async addUser(data:any) {
-        try{
-            return await prisma.users.create({
-                data,
-            })
-        }catch(err: any){
-            console.log("user repo")
-            throw new Error(err.message)
-        }
     }
 
     /**
@@ -41,7 +29,7 @@ class UserRepository {
      */
     async updateUser(id: string, data:object) {
        try{
-           return await prisma.users.update({
+           return await prisma.account.update({
                where: {
                    id,
                },
@@ -60,7 +48,7 @@ class UserRepository {
      */
     async deleteUser(id: string) {
         try{
-            return await prisma.users.delete({
+            return await prisma.account.delete({
                 where: {
                     id,
                 },
@@ -78,7 +66,7 @@ class UserRepository {
      */
     async findUserById(id: string) {
         try{
-            return await prisma.users.findUnique({
+            return await prisma.account.findUnique({
                 where: {
                     id,
                 },
@@ -96,7 +84,7 @@ class UserRepository {
      */
     async findUserByEmail(email: string) {
         try{
-            return await prisma.users.findUnique({
+            return await prisma.account.findUnique({
                 where: {
                     email,
                 },
@@ -106,8 +94,23 @@ class UserRepository {
         }
     }
 
-}
 
+    async createUserAccount(data: any) {
+        try{
+            return await prisma.account.create({
+                data,
+            })
+        }catch(err: any){
+            console.log("user repo", "Creating new member")
+            throw new Error(err.message)
+        }
+    }
+
+
+    async getAllUsers() {
+        return await prisma.account.findMany({})
+    }
+}
 
 const UserRepo = new UserRepository();
 export default UserRepo;
