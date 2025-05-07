@@ -24,7 +24,8 @@ class PermissionService{
 	async createPermission(permissionData:permissionDto ) {
 		try{
 			// check folder path
-			const folderPath = await fileRepo.getFolderByPath(permissionData.folderPath);
+			const folderPath = await fileRepo.getFolderByPath(permissionData.folderPath, false);
+			console.log("folders path",folderPath)
 			if (!folderPath) {
 				throw new AppError({message: "Folder path does not exist", statusCode: 404});
 			}

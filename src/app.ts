@@ -26,7 +26,7 @@ const limiter:RateLimitRequestHandler = rateLimit({
 
 // Middlewares
 app.set('trust proxy', 1);
-app.use(morgan("common"));
+app.use(morgan("dev"));
 app.use(compression());
 app.use(helmet());
 app.use(cors({

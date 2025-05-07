@@ -101,20 +101,6 @@ const checkPermissionLevel = async (req: Request, _: Response, next: NextFunctio
             }));
         }
 
-        // Check if the user has permission on any folder in the chain
-        // const folderIds = permission.map((perm) => perm.type);
-        // const permission = await prisma.permission.findMany({
-        //     where: {
-        //         accountId: userId,
-        //         folderPath: { in: folderIds }
-        //     },
-        // });
-        // if (!permission) {
-        //     return next(new AppError({
-        //         message: 'You Have not be granted any Access As an Admin for access',
-        //         statusCode: 403,
-        //     }));
-        // }
         req.user.permissionLevel = permission
             .map((perm) => perm.folderPath)
             .filter((path): path is string => path !== null)
@@ -140,33 +126,36 @@ const hasFolderAccess = async (
 
     if (!folderExists) throw new Error("Folder not found");
 
+    // Traverse upward from the current folder to root
     const folders = await prisma.$queryRaw<{ id: string }[]>`
-        WITH RECURSIVE folder_tree AS (
-            SELECT id, "parentId"
-            FROM "Folder"
-            WHERE id = ${folderId}
-            UNION
-            SELECT f.id, f."parentId"
-            FROM "Folder" f
-            INNER JOIN folder_tree ft ON ft."parentId" = f.id
-        )
-        SELECT id FROM folder_tree
-    `;
+    WITH RECURSIVE folder_hierarchy AS (
+      SELECT id, "parentId", 0 as depth
+      FROM "Folder"
+      WHERE id = ${folderId}
+      UNION ALL
+      SELECT f.id, f."parentId", fh.depth + 1
+      FROM "Folder" f
+      INNER JOIN folder_hierarchy fh ON fh."parentId" = f.id
+    )
+    SELECT id FROM folder_hierarchy ORDER BY depth ASC
+  `;
 
-    const folderIds = folders.map(f => f.id);
+    for (const folder of folders) {
+        const permission = await prisma.permission.findFirst({
+            where: {
+                accountId: userId,
+                folderId: folder.id
+            }
+        });
 
-    const permissions = await prisma.permission.findMany({
-        where: {
-            accountId: userId,
-            folderId: { in: folderIds }
-        },
-    });
+        if (permission) {
+            if (requiredAccess === 'ReadOnly') return true;
+            if (requiredAccess === 'ReadAndWrite' && permission.type === 'ReadAndWrite') return true;
+            return false; // Permission exists, but not enough rights
+        }
+    }
 
-    return permissions.some(p => {
-        if (requiredAccess === 'ReadOnly') return true;
-        if (requiredAccess === 'ReadAndWrite') return p.type === 'ReadAndWrite';
-        return false;
-    });
+    return false; // No permission found in any parent chain
 };
 
 

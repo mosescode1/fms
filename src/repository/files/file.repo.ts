@@ -242,10 +242,19 @@ class fileRepository {
         }
     }
 
-    async getFolderByPath(fullPath:string): Promise<any> {
+    async getFolderByPath(fullPath:string, nullValue: boolean): Promise<any> {
+
+        if (nullValue) {
+            return await prisma.folder.findFirst({
+                where: {
+                    fullPath: fullPath,
+                    parentId: null,
+                }
+            })
+        }
         return await prisma.folder.findFirst({
             where: {
-                fullPath: fullPath
+                fullPath: fullPath,
             }
         })
     }
@@ -254,6 +263,17 @@ class fileRepository {
         return await prisma.file.findFirst({
             where: {
                 filePath: remotePath
+            }
+        })
+    }
+
+    async updateDeletedFolder(folderData: { folderPath: string; userId: string; folderId: string }) {
+        return await prisma.folder.update({
+            where: {
+                id: folderData.folderId,
+            },
+            data:{
+                deleted: true,
             }
         })
     }

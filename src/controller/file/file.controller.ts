@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import fileServiceInstance from "../../service/file/file.service";
 import { AppError } from "../../lib";
+import trashService from '../../service/trash/trash.service';
 
 class FileController{
 
@@ -108,12 +109,41 @@ class FileController{
         }
 
         const folders = await fileServiceInstance.getRootFolderPermissionLevel(folderPath);
+
+        if (!folders) {
+            throw new AppError({ message: 'No folders found for the given path', statusCode: 404 });
+        }
+
+        // remove null values from the folders array
+        const filteredFolders = folders.filter(folder => folder !== null);
+
         res.status(200).json({
             status: "success",
             data:{
-                folders
+                folders: filteredFolders
             }
         })
+    }
+
+    async userDeleteFolder(req: Request, res: Response){
+        const folderPath = req.params.folderPath;
+        const userId = req.user.userId;
+        const folderId = req.params.folderId;
+        const folderData = {
+            folderPath,
+            userId,
+            folderId
+        }
+
+        // delete the folder in the database
+        const folder = await fileServiceInstance.userDeleteFolder(folderData);
+
+        // add it to the trash folder
+        const trash = await trashService.createTrashFolder(folderData);
+        res.status(200).json({
+            status: "success",
+            message: "Folder deleted successfully"
+        });
     }
 }
 

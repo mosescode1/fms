@@ -23,6 +23,7 @@ model Account {
   folders     Folder[]
   permissions Permission[]
   auditLogs   AuditLog[]
+  Trash       Trash[]
 }
 
 enum Role {
@@ -45,9 +46,10 @@ model Folder {
   accountId   String?
   owner       Account?     @relation(fields: [accountId], references: [id])
   auditLogs   AuditLog[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  deleted     Boolean      @default(false)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  Trash       Trash[]
 }
 
 // File model tied to folders and accounts
@@ -69,6 +71,7 @@ model File {
 
   uploadedAt DateTime @default(now())
   updatedAt  DateTime @updatedAt
+  Trash      Trash[]
 }
 
 // Permission model with polymorphic targets (folder/file)
@@ -102,6 +105,21 @@ enum Action {
   READ
   UPDATE
   DELETE
+}
+
+model Trash {
+  id           String   @id @default(uuid())
+  accountId    String
+  folderId     String? // Either folder or file
+  fileId       String?
+  deletedAt    DateTime @default(now())
+  originalPath String?
+  itemType     String // 'FOLDER' or 'FILE'
+
+  // Relations
+  deletedBy Account @relation(fields: [accountId], references: [id])
+  folder    Folder? @relation(fields: [folderId], references: [id])
+  file      File?   @relation(fields: [fileId], references: [id])
 }
 
 // Audit log with polymorphic tracking

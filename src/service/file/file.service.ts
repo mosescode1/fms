@@ -52,7 +52,7 @@ class fileService {
             }
 
             // Check if the folder already exists
-            if (await fileRepo.getFolderByPath(folderData.remotePath)) {
+            if (await fileRepo.getFolderByPath(folderData.remotePath, false)) {
                 throw new AppError({ message: "Folder already exists", statusCode: 409 });
             }
 
@@ -90,7 +90,7 @@ class fileService {
 
 
          // steamifier buffer
-         // const stream = streamifier.createReadStream(fileData.localSource);
+         const stream = streamifier.createReadStream(fileData.localSource);
 
          // const stream = Readable.from(fileData.localSource, { highWaterMark: 64 * 1024 }); //
 
@@ -131,16 +131,23 @@ class fileService {
 
     async getRootFolderPermissionLevel(folderPath: string[]) {
         try {
-            const allFoldersByPath = await Promise.all(
-                folderPath.map(path => fileRepo.getFolderByPath(path))
+            return await Promise.all(
+                folderPath.map(path => fileRepo.getFolderByPath(path, true))
             );
-            return allFoldersByPath;
         } catch (error: any) {
             console.error("Error fetching folders by path", error);
             throw new Error(error.message);
         }
     }
 
+    async userDeleteFolder(folderData: { folderPath: string; userId: string; folderId: string }) {
+        try{
+            return fileRepo.updateDeletedFolder(folderData);
+        }catch (error: any){
+            console.error("Error deleting folder", error);
+            throw new Error(error.message);
+        }
+    }
 }
 
 
