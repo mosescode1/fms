@@ -12,6 +12,7 @@ import organizationRoutes from "./routes/organizationRoutes/organization.routes"
 import filesRoutes from "./routes/filesRoutes/files.routes";
 import permissionRoutes from "./routes/permissionRoutes/permission.routes"
 import auditLogRoutes from "./routes/auditLog/audit.log";
+import trashRoutes from "./routes/trashRoutes/trash.routes";
 
 
 
@@ -47,6 +48,7 @@ app.use("/api/v1/organization", organizationRoutes)
 app.use("/api/v1/files", filesRoutes)
 app.use("/api/v1/auditlog",auditLogRoutes)
 app.use("/api/v1/permissions", permissionRoutes)
+app.use("/api/v1/trash", trashRoutes)
 
 
 

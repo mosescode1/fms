@@ -43,4 +43,5 @@ class AuditLogService {
 }
 
 
-export default new AuditLogService();
+const auditLogService = new AuditLogService();
+export default auditLogService;

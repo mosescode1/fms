@@ -3,6 +3,7 @@ import sftpClientService from '../../repository/files/sftpClientService';
 import {AppError} from "../../lib"
 import streamifier from 'streamifier';
 import Readable from "stream"
+import {FolderData} from '../../types/trash.types';
 
 type FileData = {
     name: string;
@@ -140,7 +141,7 @@ class fileService {
         }
     }
 
-    async userDeleteFolder(folderData: { folderPath: string; userId: string; folderId: string }) {
+    async userDeleteFolder(folderData: FolderData) {
         try{
             return fileRepo.updateDeletedFolder(folderData);
         }catch (error: any){

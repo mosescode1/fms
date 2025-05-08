@@ -1,5 +1,6 @@
 import {prisma} from "../../prisma/prisma.client";
 import audit_logService from "../../service/auditLog/audit_log.service";
+import {FolderData} from '../../types/trash.types';
 
 class fileRepository {
     rootPath = process.env.VM_ROOT_PATH || process.env.SFTP_ROOT_PATH || "/";
@@ -210,6 +211,7 @@ class fileRepository {
             return await prisma.folder.findMany({
                 where:{
                     parentId: null,
+                    deleted: false
                 }
             });
        }catch (error:any){
@@ -267,7 +269,7 @@ class fileRepository {
         })
     }
 
-    async updateDeletedFolder(folderData: { folderPath: string; userId: string; folderId: string }) {
+    async updateDeletedFolder(folderData: FolderData) {
         return await prisma.folder.update({
             where: {
                 id: folderData.folderId,

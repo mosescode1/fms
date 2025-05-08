@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import fileServiceInstance from "../../service/file/file.service";
 import { AppError } from "../../lib";
 import trashService from '../../service/trash/trash.service';
+import auditLogService from '../../service/auditLog/audit_log.service';
 
 class FileController{
 
@@ -127,19 +128,39 @@ class FileController{
 
     async userDeleteFolder(req: Request, res: Response){
         const folderPath = req.params.folderPath;
-        const userId = req.user.userId;
+        const accountId = req.user.userId;
         const folderId = req.params.folderId;
-        const folderData = {
-            folderPath,
-            userId,
-            folderId
+
+        // check if the folder exists
+        const existingFolder = await fileServiceInstance.getFolderById(folderId);
+        if (!existingFolder) {
+            throw new AppError({ message: 'Folder not found', statusCode: 404 });
         }
 
-        // delete the folder in the database
+        console.log(existingFolder)
+        const folderData = {
+            folderPath,
+            accountId,
+            folderId,
+            originalPath: existingFolder.fullPath,
+        }
+
+        // mark as delete in the database and not fully delete it
         const folder = await fileServiceInstance.userDeleteFolder(folderData);
 
         // add it to the trash folder
-        const trash = await trashService.createTrashFolder(folderData);
+        await trashService.createTrashFolder(folderData);
+
+        // add it to audit log
+        const auditLogData = {
+            action: "DELETE",
+            targetId: folder.id,
+            actorId: accountId,
+            targetType: "FOLDER",
+            folderId: folder.id,
+        }
+        await auditLogService.createAuditLog(auditLogData);
+
         res.status(200).json({
             status: "success",
             message: "Folder deleted successfully"
