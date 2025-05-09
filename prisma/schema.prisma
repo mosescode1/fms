@@ -54,12 +54,13 @@ model Folder {
 
 // File model tied to folders and accounts
 model File {
-  id       String @id @default(uuid())
-  fileName String @db.VarChar(255)
-  fileType String @db.VarChar(255)
+  id       String  @id @default(uuid())
+  fileName String  @db.VarChar(255)
+  fileType String  @db.VarChar(255)
   fileSize Int
-  filePath String @db.VarChar(255)
-  encoding String @db.VarChar(255)
+  filePath String  @db.VarChar(255)
+  encoding String  @db.VarChar(255)
+  deleted  Boolean @default(false)
 
   folderId String?
   folder   Folder? @relation(fields: [folderId], references: [id])
@@ -105,6 +106,7 @@ enum Action {
   READ
   UPDATE
   DELETE
+  RESTORE
 }
 
 model Trash {

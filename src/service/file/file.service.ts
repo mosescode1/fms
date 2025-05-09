@@ -102,6 +102,7 @@ class fileService {
 
          return await fileRepo.uploadFile(fileData);
      } catch (error: any) {
+         console.error(error)
          throw new AppError({ message: error.message, statusCode: error.statusCode || 500 });
      }
  }

@@ -80,8 +80,6 @@ class fileRepository {
                 }
             )
 
-
-
             // Create the file in the database
             const file = await prisma.file.create({
                 data: {
@@ -103,8 +101,6 @@ class fileRepository {
                     filePath: fullPath,
                 },
             })
-
-            // TODO: upload the file to the remote server
 
             // TODO: add the file to the audit log
             const auditLogData = {
@@ -195,6 +191,9 @@ class fileRepository {
     async allFiles(): Promise<any[]> {
         try {
             return await prisma.file.findMany({
+                where:{
+                    deleted: false
+                },
                 orderBy:{
                     uploadedAt: 'desc'
                 }
@@ -206,14 +205,8 @@ class fileRepository {
 
 
     async allFolders(): Promise<any[]> {
-        // Simulate fetching all folder from a database
        try{
-            return await prisma.folder.findMany({
-                where:{
-                    parentId: null,
-                    deleted: false
-                }
-            });
+            return await prisma.folder.findMany({where:{parentId: null, deleted: false}});
        }catch (error:any){
               throw new Error(error.message);
        }
@@ -222,10 +215,10 @@ class fileRepository {
     async getFolderById(folderId: string): Promise<any> {
         try {
             return await prisma.folder.findUnique({
-                where: { id: folderId },
+                where: { id: folderId , deleted: false},
                 include: {
-                    files: true,
-                    children: true,
+                    files: {where:{deleted: false}},
+                    children: { where: {deleted:false}}
                 },
             });
         } catch (error:any) {
@@ -237,7 +230,7 @@ class fileRepository {
     async getFileById(fileId: string): Promise<any> {
         try {
             return await prisma.file.findUnique({
-                where: { id: fileId },
+                where: { id: fileId, deleted:false },
             });
         } catch (error:any) {
             throw new Error(error.message);
@@ -251,6 +244,7 @@ class fileRepository {
                 where: {
                     fullPath: fullPath,
                     parentId: null,
+                    deleted:false,
                 }
             })
         }
@@ -264,7 +258,8 @@ class fileRepository {
     async getFileByPath(remotePath: string) {
         return await prisma.file.findFirst({
             where: {
-                filePath: remotePath
+                filePath: remotePath,
+                deleted: false
             }
         })
     }

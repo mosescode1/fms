@@ -37,7 +37,7 @@ RUN npm install --omit=dev
 COPY --from=builder /app/prisma ./prisma
 RUN npx prisma generate
 # Expose the desired port (e.g., 3000)
-EXPOSE 3000
+EXPOSE 3002
 
 # Command to run the application
 CMD ["npm", "start"]

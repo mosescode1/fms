@@ -72,6 +72,31 @@ class TrashRepo{
 		}
 
 	}
+
+	async getTrashById(trashId: string) {
+		try {
+			return await prisma.trash.findUnique({
+				where: { id: trashId },
+				include: {
+					deletedBy: true,
+					folder: true,
+					file: true
+				}
+			});
+		} catch (error:any) {
+			throw new Error(error.message);
+		}
+	}
+
+	async deleteTrashItem(trashId: string) {
+		try{
+			return await prisma.trash.delete({
+				where: { id: trashId }
+			});
+		}catch (error:any) {
+			throw new Error(error.message);
+		}
+	}
 }
 
 

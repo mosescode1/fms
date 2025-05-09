@@ -26,8 +26,8 @@ const Config = {
 				: process.env.REFRESH_SECRET_KEY_JWT || '',
 		expiry:
 			process.env.NODE_ENV === 'development'
-				? '1h'
-				: process.env.SECRET_KEY_JWT_EXPIRES || '1h',
+				? '1d'
+				: process.env.SECRET_KEY_JWT_EXPIRES || '1d',
 		refreshExpiry:
 			process.env.NODE_ENV === 'development'
 				? '1d'

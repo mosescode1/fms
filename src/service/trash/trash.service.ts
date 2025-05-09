@@ -31,6 +31,24 @@ class TrashService{
 			throw new Error(error.message)
 		}
 	}
+
+	async getTrashById(trashId: string) {
+		try{
+			return await trashRepo.getTrashById(trashId);
+		}catch (error: any){
+			console.error("Error getting trashed item by ID", error);
+			throw new Error(error.message);
+		}
+	}
+
+	async deleteTrashItem(trashId: string) {
+		try{
+			return await trashRepo.deleteTrashItem(trashId);
+		}catch (error:any) {
+			console.error("Error deleting trashed item by ID", error);
+			throw new Error(error.message);
+		}
+	}
 }
 
 
