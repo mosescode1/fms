@@ -4,15 +4,18 @@ import helmet from "helmet"
 import compression from "compression"
 import morgan from "morgan";
 import rateLimit, {RateLimitRequestHandler} from "express-rate-limit";
-import authRoutes from "./routes/authRoutes/auth.routes";
-import {globalError} from "./controller/error/error.controller";
+import authRoutes from "./routes/v1/authRoutes/auth.routes";
+import {globalError} from "./controller/v1/error/error.controller";
 import {AppError} from "./lib";
-import userRoutes from "./routes/userRoutes/user.routes";
-import organizationRoutes from "./routes/organizationRoutes/organization.routes";
-import filesRoutes from "./routes/filesRoutes/files.routes";
-import permissionRoutes from "./routes/permissionRoutes/permission.routes"
-import auditLogRoutes from "./routes/auditLog/audit.log";
-import trashRoutes from "./routes/trashRoutes/trash.routes";
+//v1
+import userRoutes from "./routes/v1/userRoutes/user.routes";
+import organizationRoutes from "./routes/v1/organizationRoutes/organization.routes";
+import filesRoutes from "./routes/v1/filesRoutes/files.routes";
+import permissionRoutes from "./routes/v1/permissionRoutes/permission.routes"
+import auditLogRoutes from "./routes/v1/auditLog/audit.log";
+import trashRoutes from "./routes/v1/trashRoutes/trash.routes";
+// v2
+import fileRoutesV2 from "./routes/v2/fileRoutes/files.routes";
 
 
 
@@ -42,6 +45,8 @@ app.use(limiter);
 app.get("/api/v1/health", (_, res) => {
 	res.status(200).json({status: "UP"});
 })
+
+// VERSION 1
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/users", userRoutes)
 app.use("/api/v1/organization", organizationRoutes)
@@ -50,6 +55,9 @@ app.use("/api/v1/auditlog",auditLogRoutes)
 app.use("/api/v1/permissions", permissionRoutes)
 app.use("/api/v1/trash", trashRoutes)
 
+
+// VERSION 2
+app.use("/api/v2/files", fileRoutesV2);
 
 
 // Unhandled routes

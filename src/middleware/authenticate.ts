@@ -1,7 +1,7 @@
 import {AppError} from "../lib";
 import {JwtFeature} from "../lib/jwt";
 import {Request, Response, NextFunction} from "express";
-import userRepo from "../repository/user/user.repo";
+import userRepo from "../repository/v1/user/user.repo";
 
 
 const Authenticate = async (req:Request, _:Response, next:NextFunction) => {

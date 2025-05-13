@@ -1,7 +1,7 @@
 services:
   postgres:
     image: postgres:alpine
-    container_name: postgres
+    container_name: postgresgemz
     restart: always
     shm_size: 256mb
     environment:

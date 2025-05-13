@@ -33,7 +33,7 @@ enum Role {
 
 // Folder model with self-referencing hierarchy
 model Folder {
-  id       String   @id @default(uuid())
+  id       String   @id
   name     String
   type     String   @default("folder")
   fullPath String? // optional: for fast search
@@ -54,13 +54,15 @@ model Folder {
 
 // File model tied to folders and accounts
 model File {
-  id       String  @id @default(uuid())
-  fileName String  @db.VarChar(255)
-  fileType String  @db.VarChar(255)
-  fileSize Int
-  filePath String  @db.VarChar(255)
-  encoding String  @db.VarChar(255)
-  deleted  Boolean @default(false)
+  id             String  @id
+  fileName       String  @db.VarChar(255)
+  fileType       String  @db.VarChar(255)
+  fileSize       Int
+  filePath       String  @db.VarChar(255)
+  encoding       String  @db.VarChar(255)
+  deleted        Boolean @default(false)
+  webContentLink String  @db.VarChar(255)
+  webViewLink    String  @db.VarChar(255)
 
   folderId String?
   folder   Folder? @relation(fields: [folderId], references: [id])

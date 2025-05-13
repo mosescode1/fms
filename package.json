@@ -46,6 +46,7 @@
     "express": "^5.1.0",
     "express-rate-limit": "^7.5.0",
     "generic-pool": "^3.9.0",
+    "googleapis": "^148.0.0",
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.2",
     "lodash": "^4.17.21",
