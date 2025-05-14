@@ -144,5 +144,5 @@ class SftpConnectionPoolService {
 	}
 }
 
-const sftpConnectionPoolService = new SftpConnectionPoolService();
+const sftpConnectionPoolService = SftpConnectionPoolService;
 export default sftpConnectionPoolService;

@@ -46,16 +46,12 @@ class FileController{
             return res.status(400).json({ error: 'No file uploaded Missing File to upload' });
         }
 
-        // Log the file information
-        console.log("file", req.file)
-
-
         const { buffer, originalname, mimetype, size, encoding } = req.file;
 
         // TODO: get the remote path from the request body
         let remotePath = '/';
 
-        // TODO: create the file in the database
+        // TODO: create the file in the google by clling drive service
         const fileData = {
             name: originalname,
             mimetype,

@@ -58,8 +58,8 @@ class fileService {
             }
 
             // Create the folder on the server
-            // TODO comeback to this after server is up
-            await sftpClientService.createFolder(folderData.remotePath);
+            // TODO comeback to this after server is up fix up
+            // await sftpClientService.createFolder(folderData.remotePath);
 
             // Save the folder in the repository
             return await fileRepo.createFolder(folderData);
@@ -97,8 +97,8 @@ class fileService {
 
 
          // create file on the server
-         // TODO come back to this when server is up
-         await sftpClientService.uploadFile(stream, fileData.remotePath);
+         // TODO come back to this when server is up fix up
+         // await sftpClientService.uploadFile(stream, fileData.remotePath);
 
          return await fileRepo.uploadFile(fileData);
      } catch (error: any) {

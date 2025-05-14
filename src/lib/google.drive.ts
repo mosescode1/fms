@@ -1,9 +1,9 @@
 import { google } from "googleapis";
 
-const CLIENT_ID = "155876490592-m2usspr95vqe4d421dak3ca5ftvpnchu.apps.googleusercontent.com";
-const CLIENT_SECRETS = "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";
+const CLIENT_ID = "91882017575-p341q9fnapvmjqtfsfj5l0gacsc9em3k.apps.googleusercontent.com";
+const CLIENT_SECRETS = "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";
 const REDIRECT_URL = "https://developers.google.com/oauthplayground";
-const REFRESH_TOKEN = "1//04ZEdbpogqtiACgYIARAAGAQSNwF-L9IraV0Ey_T81XRjk853ze773aTeHJ4jMkBLd1OsRfBnbhtxvix643Zf9EY-D99NrLeQKKM";
+const REFRESH_TOKEN = "1//040Bgs82Jicu1CgYIARAAGAQSNwF-L9Ir0K5g3rCu-DdMQ_SnfOnPk95AdVaamDALXpEoAX4lk3Khq6T-aY3epo6ljrxih0Ury20"
 
 
 const oauth2Client = new google.auth.OAuth2(
