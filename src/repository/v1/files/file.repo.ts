@@ -1,5 +1,5 @@
 import {prisma} from "../../../prisma/prisma.client";
-import audit_logService from "../../../service/v1/auditLog/audit_log.service";
+// import audit_logService from "../../../service/v1/auditLog/audit_log.service";
 import {FolderData} from '../../../types/trash.types';
 
 class fileRepository {
@@ -39,7 +39,7 @@ class fileRepository {
             where: { folderId },
             data: {
                 filePath: fullPath,
-            }, // assuming file has a fullPath field
+            },
         });
 
         // 3. Get and recursively update all child folder
@@ -113,7 +113,7 @@ class fileRepository {
                 targetType: "FILE",
                 fileId: file.id,
             }
-            await audit_logService.createAuditLog(auditLogData)
+            // await audit_logService.createAuditLog(auditLogData)
             return updatedFile;
 
         }catch (error:any){
@@ -163,7 +163,7 @@ class fileRepository {
                 targetType: "FOLDER",
                 folderId: folder.id,
             }
-            await audit_logService.createAuditLog(auditLogData)
+            // await audit_logService.createAuditLog(auditLogData)
             return updatedFolder;
         } catch (err) {
            throw new Error("failed ")

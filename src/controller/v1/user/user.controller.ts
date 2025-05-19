@@ -2,6 +2,8 @@ import { AppError } from '../../../lib';
 import userService from '../../../service/v1/user/user.service';
 import reqValidator from '../../../lib/reqValidator';
 import AuthService from '../../../service/v1/auth/auth.service';
+import permissionService from '../../../service/v1/permission/permission.service';
+import { Permissions, ResourceType } from '@prisma/client';
 
 class UserController {
 	/**
@@ -131,6 +133,70 @@ class UserController {
 				member: newMember,
 			},
 		});
+	}
+
+	async giveUserPermissions(req: any, res: any) {
+		try {
+			const { id } = req.params;
+			const { 
+				resourceType, 
+				permissions, 
+				folderId, 
+				fileId, 
+				inherited = false 
+			} = req.body;
+
+			// Validate required fields
+			if (!id) {
+				throw new AppError({ message: 'User ID is required', statusCode: 400 });
+			}
+
+			if (!resourceType || !permissions || permissions.length === 0) {
+				throw new AppError({ message: 'Resource type and permissions are required', statusCode: 400 });
+			}
+
+			// Validate that either folderId or fileId is provided based on resourceType
+			if (resourceType === ResourceType.FOLDER && !folderId) {
+				throw new AppError({ message: 'Folder ID is required for folder permissions', statusCode: 400 });
+			}
+
+			if (resourceType === ResourceType.FILE && !fileId) {
+				throw new AppError({ message: 'File ID is required for file permissions', statusCode: 400 });
+			}
+
+			// Check if user exists
+			const user = await userService.findUserById(id);
+			if (!user) {
+				throw new AppError({ message: 'User not found', statusCode: 404 });
+			}
+
+			// Create permission data
+			const permissionData = {
+				resourceType: resourceType as ResourceType,
+				permissions: permissions as Permissions[],
+				inherited,
+				folderId,
+				fileId,
+				accountId: id
+			};
+
+			// Use the permission service to create the permission
+			const permission = await permissionService.createPermission(permissionData);
+
+			res.status(201).json({
+				status: 'success',
+				message: 'Permission assigned successfully',
+				data: {
+					permission
+				}
+			});
+		} catch (error: any) {
+			if (error instanceof AppError) {
+				throw error;
+			} else {
+				throw new AppError({ message: error.message, statusCode: 500 });
+			}
+		}
 	}
 }
 

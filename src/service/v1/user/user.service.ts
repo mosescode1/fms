@@ -32,6 +32,10 @@ class UserService {
             return userProfile;
         });
     }
+
+    async findUserById(id: string) {
+        return await userRepo.findUserById(id);
+    }
 }
 
 

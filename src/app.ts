@@ -12,7 +12,7 @@ import userRoutes from './routes/v1/userRoutes/user.routes';
 import securityRoutes from './routes/v1/securitygroup/group.routes';
 // import organizationRoutes from "./routes/v1/organizationRoutes/organization.routes";
 // import filesRoutes from "./routes/v1/filesRoutes/files.routes";
-// import permissionRoutes from "./routes/v1/permissionRoutes/permission.routes"
+import permissionRoutes from "./routes/v1/permissionRoutes/permission.routes"
 // import auditLogRoutes from "./routes/v1/auditLog/audit.log";
 // import trashRoutes from './routes/v1/trashRoutes/trash.routes';
 // v2
@@ -50,10 +50,9 @@ app.get('/api/v1/health', (_, res) => {
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/security-group', securityRoutes);
-// app.use("/api/v1/organization", organizationRoutes)
 // app.use("/api/v1/files", filesRoutes)
 // app.use("/api/v1/auditlog",auditLogRoutes)
-// app.use("/api/v1/permissions", permissionRoutes)
+app.use("/api/v1/permissions", permissionRoutes)
 // app.use("/api/v1/trash", trashRoutes)
 
 // VERSION 2

@@ -10,22 +10,35 @@ const superAdminAndAdmin = ['SUPER_ADMIN', 'ADMIN'];
 const adminOnly = ['ADMIN'];
 const allRoles = ['SUPER_ADMIN', 'ADMIN', 'USER'];
 
+// get all users
 router.get(
 	'/',
 	Authenticate,
 	checkRolePermission(superAdminAndAdmin),
 	catchAsync(userController.getAllUsers)
 );
+
+// Create a new User
 router.post(
 	'/add-user',
 	catchAsync(Authenticate),
 	checkRolePermission(superAdminAndAdmin),
 	catchAsync(userController.createNewUser)
 );
+
+// give a user permissions
+router.post(
+	'/permission{/:id}',
+	Authenticate,
+	checkRolePermission(superAdminAndAdmin),
+	catchAsync(userController.giveUserPermissions)
+);
+
 router.get(
 	'/me',
 	Authenticate,
 	checkRolePermission(allRoles),
 	userController.userProfile
 );
+
 export default router;

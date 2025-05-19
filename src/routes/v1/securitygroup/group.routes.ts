@@ -3,7 +3,7 @@ import { Router } from 'express';
 import { Authenticate } from '../../../middleware/authenticate';
 import { checkRolePermission } from '../../../middleware/permission';
 import { catchAsync } from '../../../lib';
-import securityGroupController from '../../../controller/v1/securityGroup/group.controller';
+import securityGroupPermissionController from '../../../controller/v1/securityGroup/securityGroupPermission.controller';
 import roles from '../../../types/roles.types';
 
 const router = Router();
@@ -46,6 +46,14 @@ router.post(
 	Authenticate,
 	checkRolePermission(roles.SUPER_AND_ADMIN),
 	catchAsync(securityGroupController.addUserToGroup)
+);
+
+// give permissions to a security group
+router.post(
+	'/:id/permissions',
+	Authenticate,
+	checkRolePermission(roles.SUPER_AND_ADMIN),
+	catchAsync(securityGroupPermissionController.giveSecurityGroupPermissions)
 );
 
 export default router;

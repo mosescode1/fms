@@ -1,14 +1,16 @@
 import permissionRepo from '../../../repository/v1/permission/permission.repo';
 import {AppError} from '../../../lib';
 import fileRepo from '../../../repository/v1/files/file.repo';
+import { Permissions, ResourceType } from '@prisma/client';
 
-type permissionDto = {
-	type: string;
-	folderPath: string;
-	targetType: string;
-	accountId: string;
-	targetId?: string;
-	folderId?: string;
+type AclEntryDto = {
+    resourceType: ResourceType;
+    permissions: Permissions[];
+    inherited?: boolean;
+    folderId?: string;
+    fileId?: string;
+    accountId?: string;
+    groupId?: string;
 }
 
 class PermissionService{
@@ -21,23 +23,58 @@ class PermissionService{
 		}
 	}
 
-	async createPermission(permissionData:permissionDto ) {
+	async createPermission(permissionData: AclEntryDto) {
 		try{
-			// check folder path
-			const folderPath = await fileRepo.getFolderByPath(permissionData.folderPath, false);
-			console.log("folders path",folderPath)
-			if (!folderPath) {
-				throw new AppError({message: "Folder path does not exist", statusCode: 404});
+			// Validate input data
+			if (!permissionData.resourceType) {
+				throw new AppError({message: "Resource type is required", statusCode: 400});
 			}
-			// check if account already has permission on the folderPath and user id
-			const existingPermission = await permissionRepo.getUserPermissionByPath(permissionData.accountId, permissionData.folderPath);
-			if (existingPermission){
-				throw new AppError({message:"Permission already Set", statusCode: 404});
-			}
-			permissionData.targetId = folderPath.id;
-			permissionData.folderId = folderPath.id;
 
-			// create permission
+			if (!permissionData.permissions || permissionData.permissions.length === 0) {
+				throw new AppError({message: "At least one permission is required", statusCode: 400});
+			}
+
+			// For folder permissions
+			if (permissionData.resourceType === ResourceType.FOLDER && permissionData.folderId) {
+				// Check if folder exists
+				const folder = await fileRepo.getFolderById(permissionData.folderId);
+				if (!folder) {
+					throw new AppError({message: "Folder does not exist", statusCode: 404});
+				}
+
+				// Check if user already has permission on this folder
+				if (permissionData.accountId) {
+					const existingPermission = await permissionRepo.getUserPermissionByFolderId(
+						permissionData.accountId, 
+						permissionData.folderId
+					);
+					if (existingPermission) {
+						throw new AppError({message: "Permission already set for this user on this folder", statusCode: 400});
+					}
+				}
+			}
+
+			// For file permissions
+			if (permissionData.resourceType === ResourceType.FILE && permissionData.fileId) {
+				// Check if file exists
+				const file = await fileRepo.getFileById(permissionData.fileId);
+				if (!file) {
+					throw new AppError({message: "File does not exist", statusCode: 404});
+				}
+
+				// Check if user already has permission on this file
+				if (permissionData.accountId) {
+					const existingPermission = await permissionRepo.getUserPermissionByFileId(
+						permissionData.accountId, 
+						permissionData.fileId
+					);
+					if (existingPermission) {
+						throw new AppError({message: "Permission already set for this user on this file", statusCode: 400});
+					}
+				}
+			}
+
+			// Create permission
 			return await permissionRepo.createPermission(permissionData);
 		}catch (error:any){
 			if (error instanceof AppError) {
@@ -48,15 +85,63 @@ class PermissionService{
 		}
 	}
 
-
 	async getUserPermission(userId: string) {
 		try{
 			const userPermissions = await permissionRepo.getUserPermission(userId);
-			if (!userPermissions) {
-				throw new AppError({message: "Permission not found", statusCode: 404});
+			if (!userPermissions || userPermissions.length === 0) {
+				throw new AppError({message: "No permissions found for this user", statusCode: 404});
 			}
 			return userPermissions;
 		}catch (error:any){
+			if (error instanceof AppError) {
+				throw error;
+			} else {
+				throw new AppError({message: error.message, statusCode: 500});
+			}
+		}
+	}
+
+	async getPermissionById(permissionId: string) {
+		try {
+			const permission = await permissionRepo.getPermissionById(permissionId);
+			if (!permission) {
+				throw new AppError({message: "Permission not found", statusCode: 404});
+			}
+			return permission;
+		} catch (error: any) {
+			if (error instanceof AppError) {
+				throw error;
+			} else {
+				throw new AppError({message: error.message, statusCode: 500});
+			}
+		}
+	}
+
+	async removePermission(permissionId: string) {
+		try {
+			const permission = await permissionRepo.getPermissionById(permissionId);
+			if (!permission) {
+				throw new AppError({message: "Permission not found", statusCode: 404});
+			}
+
+			return await permissionRepo.removePermission(permissionId);
+		} catch (error: any) {
+			if (error instanceof AppError) {
+				throw error;
+			} else {
+				throw new AppError({message: error.message, statusCode: 500});
+			}
+		}
+	}
+
+	async getGroupPermissions(groupId: string) {
+		try {
+			const groupPermissions = await permissionRepo.getGroupPermissions(groupId);
+			if (!groupPermissions || groupPermissions.length === 0) {
+				throw new AppError({message: "No permissions found for this group", statusCode: 404});
+			}
+			return groupPermissions;
+		} catch (error: any) {
 			if (error instanceof AppError) {
 				throw error;
 			} else {
