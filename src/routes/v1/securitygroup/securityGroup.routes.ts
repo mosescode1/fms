@@ -16,7 +16,7 @@ router.get(
 	catchAsync(securityGroupPermissionController.getAllSecurityGroups)
 );
 
-// create a security group and add permissions
+// create a security group
 router.post(
 	'/',
 	Authenticate,
@@ -26,7 +26,7 @@ router.post(
 
 // edit a security group
 router.patch(
-	'{/:id}',
+	'{/:groupId}',
 	Authenticate,
 	checkRolePermission(roles.SUPER_AND_ADMIN),
 	catchAsync(securityGroupPermissionController.editSecurityGroup)
@@ -42,18 +42,11 @@ router.delete(
 
 // add a user to a security group
 router.post(
-	'{/:id}/add-user',
+	'{/:groupId}/add-user',
 	Authenticate,
 	checkRolePermission(roles.SUPER_AND_ADMIN),
 	catchAsync(securityGroupPermissionController.addUserToGroup)
 );
 
-// give permissions to a security group
-router.post(
-	'/:id/permissions',
-	Authenticate,
-	checkRolePermission(roles.SUPER_AND_ADMIN),
-	catchAsync(securityGroupPermissionController.giveSecurityGroupPermissions)
-);
 
 export default router;

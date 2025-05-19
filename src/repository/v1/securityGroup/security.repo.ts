@@ -1,7 +1,8 @@
 import { prisma } from '../../../prisma/prisma.client';
+import  {SecurityGroup} from "@prisma/client";
 
 class SecurityGroupRepo {
-	// get all security group
+	// get all security groups
 	async allSecurityGroups() {
 		try {
 			return await prisma.securityGroup.findMany({
@@ -15,16 +16,25 @@ class SecurityGroupRepo {
 		}
 	}
 
-	// create security group
-	async createSecurityGroup(data: any) {
+	async getSecurityGroupByName(name: string){
+		try {
+			return await prisma.securityGroup.findFirst({
+				where: {
+					name,
+				},
+			});
+		}catch(error: any){
+			throw new Error(error.message);
+		}
+	}
+
+	// create a security group
+	async createSecurityGroup(data: SecurityGroup & { acls: any[] } ) {
 		try {
 			return await prisma.securityGroup.create({
 				data: {
 					name: data.name,
 					description: data.description,
-					acls: {
-						create: data.acls,
-					},
 				},
 			});
 		} catch (error: any) {
@@ -46,7 +56,7 @@ class SecurityGroupRepo {
 		}
 	}
 
-	// edit security group
+	// edit a security group
 	async editSecurityGroup(id: string, data: any) {
 		try {
 			return await prisma.securityGroup.update({
@@ -55,10 +65,7 @@ class SecurityGroupRepo {
 				},
 				data: {
 					name: data.name,
-					description: data.description,
-					acls: {
-						updateMany: data.acls,
-					},
+					description: data.description
 				},
 			});
 		} catch (error: any) {
@@ -76,6 +83,31 @@ class SecurityGroupRepo {
 			});
 		} catch (error: any) {
 			throw new Error(error.message);
+		}
+	}
+
+	async getSecurityGroupById(securityGroupId: any) {
+		try{
+			return await prisma.securityGroup.findUnique({
+				where: {
+					id: securityGroupId,
+				},
+			});
+		}catch (error: any){
+			throw new Error(error.message);
+		}
+	}
+
+	async getUserInGroup(userId: any, securityGroupId: any) {
+		try {
+			return await prisma.groupMember.findFirst({
+				where:{
+					accountId: userId ? userId : "",
+					groupId: securityGroupId ? securityGroupId : "",
+				}
+			});
+		}catch (e:any) {
+			throw new Error(e.message);
 		}
 	}
 }

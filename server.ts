@@ -14,6 +14,15 @@ process.on("uncaughtException", (err: Error) => {
     process.exit(1)
 })
 
+process.on("warning", (warning) => {
+    console.error(`Received warning: ${warning.name} - ${warning.message}`)
+    console.error(warning.stack)
+})
+
+process.on("beforeExit", (code) => {
+    console.log("Before exit process", code)
+})
+
 process.on("SIGTERM", () => {
     console.log("shutting down gracefully")
     process.exit(0)

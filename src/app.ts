@@ -9,7 +9,7 @@ import { globalError } from './controller/v1/error/error.controller';
 import { AppError } from './lib';
 //v1
 import userRoutes from './routes/v1/userRoutes/user.routes';
-import securityRoutes from './routes/v1/securitygroup/group.routes';
+import securityRoutes from './routes/v1/securitygroup/securityGroup.routes';
 // import organizationRoutes from "./routes/v1/organizationRoutes/organization.routes";
 // import filesRoutes from "./routes/v1/filesRoutes/files.routes";
 import permissionRoutes from "./routes/v1/permissionRoutes/permission.routes"
