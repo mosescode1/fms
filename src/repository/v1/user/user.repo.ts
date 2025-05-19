@@ -15,7 +15,6 @@ class UserRepository {
                data,
            })
        }catch(err: any){
-           console.log("user repo")
            throw new Error(err.message)
        }
     }

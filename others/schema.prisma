@@ -1,0 +1,217 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Unified account model for both admins and members
+model Account {
+  id          String   @id @default(uuid())
+  fullName    String   @db.VarChar(255)
+  email       String   @unique @db.VarChar(255)
+  phoneNumber String?  @db.VarChar(255)
+  password    String   @db.VarChar(255)
+  role        Role     @default(ADMIN)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  files           File[]
+  folders         Folder[]
+  permissions     Permission[]
+  auditLogs       AuditLog[]
+  Trash           Trash[]
+  SecurityGroup   SecurityGroup? @relation(fields: [securityGroupId], references: [id])
+  securityGroupId String?
+  SecurityGroup   SecurityGroup? @relation(fields: [securityGroupId], references: [id])
+  GroupMember     GroupMember[]
+}
+
+enum Role {
+  ADMIN
+  MEMBER
+}
+
+// Folder model with self-referencing hierarchy
+model Folder {
+  id       String   @id
+  name     String
+  type     String   @default("folder")
+  fullPath String? // optional: for fast search
+  parentId String?
+  parent   Folder?  @relation("FolderHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children Folder[] @relation("FolderHierarchy")
+
+  files       File[]
+  permissions Permission[]
+  accountId   String?
+  owner       Account?     @relation(fields: [accountId], references: [id])
+  auditLogs   AuditLog[]
+  deleted     Boolean      @default(false)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  Trash       Trash[]
+}
+
+// File model tied to folders and accounts
+model File {
+  id             String  @id
+  fileName       String  @db.VarChar(255)
+  fileType       String  @db.VarChar(255)
+  fileSize       Int
+  filePath       String  @db.VarChar(255)
+  encoding       String  @db.VarChar(255)
+  deleted        Boolean @default(false)
+  webContentLink String  @db.VarChar(255)
+  webViewLink    String  @db.VarChar(255)
+
+  folderId String?
+  folder   Folder? @relation(fields: [folderId], references: [id])
+
+  accountId String?
+  owner     Account? @relation(fields: [accountId], references: [id])
+
+  auditLogs AuditLog[]
+
+  uploadedAt DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  Trash      Trash[]
+}
+
+// Permission model with polymorphic targets (folder/file)
+model Permission {
+  id         String          @id @default(uuid())
+  type       PermissionsType
+  targetId   String // ID of the folder or file
+  folderPath String? // optional: for fast search
+  targetType ResourceType
+  accountId  String
+  account    Account         @relation(fields: [accountId], references: [id])
+
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  Folder          Folder?        @relation(fields: [folderId], references: [id])
+  folderId        String?
+  SecurityGroup   SecurityGroup? @relation(fields: [securityGroupId], references: [id])
+  securityGroupId String?
+}
+
+enum PermissionsType {
+  // General
+  FULL_ACCESS
+  READ
+  WRITE
+  EXECUTE
+  UPDATE
+  UPLOAD
+  DOWNLOAD
+  RENAME
+  MOVE
+  COPY
+
+  // File-specific
+  OPEN_FILE
+  DELETE_FILE
+  SHARE_FILE
+
+  // Folder-specific
+  CREATE_FOLDER
+  OPEN_FOLDER
+  DELETE_FOLDER
+  SHARE_FOLDER
+  ARCHIVE
+  RESTORE
+
+  // Admin
+  MANAGE_PERMISSIONS
+  MANAGE_SETTINGS
+  MANAGE_ROLES
+  MANAGE_USERS
+  CHANGE_PERMISSIONS
+  EXECUTE_PERMISSIONS
+  VIEW_PERMISSIONS
+  PUBLISH
+  UNPUBLISH
+  REJECT
+  APPROVE_DOWNLOAD
+  APPROVE_UPLOAD
+}
+
+enum ResourceType {
+  FOLDER
+  FILE
+}
+
+enum Action {
+  CREATE
+  READ
+  UPDATE
+  DELETE
+  RESTORE
+}
+
+model Trash {
+  id           String   @id @default(uuid())
+  accountId    String
+  folderId     String? // Either folder or file
+  fileId       String?
+  deletedAt    DateTime @default(now())
+  originalPath String?
+  itemType     String // 'FOLDER' or 'FILE'
+
+  // Relations
+  deletedBy Account @relation(fields: [accountId], references: [id])
+  folder    Folder? @relation(fields: [folderId], references: [id])
+  file      File?   @relation(fields: [fileId], references: [id])
+}
+
+// Audit log with polymorphic tracking
+model AuditLog {
+  id         String       @id @default(uuid())
+  action     Action
+  targetId   String // Folder or File ID
+  targetType ResourceType
+  actorId    String
+  actor      Account      @relation(fields: [actorId], references: [id])
+
+  ipAddress String?
+  userAgent String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  Folder    Folder?  @relation(fields: [folderId], references: [id])
+  folderId  String?
+  File      File?    @relation(fields: [fileId], references: [id])
+  fileId    String?
+}
+
+/**
+ * ######################################
+ * SECURITY GROUPS
+ * ######################################
+ */
+
+model SecurityGroup {
+  id          String   @id @default(uuid())
+  name        String   @db.VarChar(255)
+  description String?  @db.VarChar(255)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  permissions Permission[]
+  members     Account[]     @relation("GroupMembers")
+  Account     Account[]
+  GroupMember GroupMember[]
+}
+
+model GroupMember {
+  id              String @id @default(uuid())
+  accountId       String
+  securityGroupId String
+
+  account       Account       @relation(fields: [accountId], references: [id])
+  securityGroup SecurityGroup @relation(fields: [securityGroupId], references: [id])
+}

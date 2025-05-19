@@ -3,6 +3,5 @@ node_modules
 build
 .idea
 data
-others
 others/other.prisma
 .env

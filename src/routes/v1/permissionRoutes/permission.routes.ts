@@ -4,10 +4,10 @@ import permissionController from "../../../controller/v1/permmission/permission.
 import {catchAsync} from '../../../lib';
 
 const router = Router()
-
-
-router.get("/", Authenticate, catchAsync( permissionController.getAllPermission))
-router.post("/", Authenticate, catchAsync( permissionController.createPermission))
+//
+//
+// router.get("/", Authenticate, catchAsync( permissionController.getAllPermission))
+// router.post("/", Authenticate, catchAsync( permissionController.createPermission))
 
 
 
