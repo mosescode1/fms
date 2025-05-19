@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import fileServiceInstance from "../../../service/v1/file/file.service";
 import { AppError } from "../../../lib";
 import trashService from '../../../service/v1/trash/trash.service';
-import auditLogService from '../../../service/v1/auditLog/audit_log.service';
+// import auditLogService from '../../../service/v1/auditLog/audit_log.service';
 
 class FileController{
 
@@ -17,9 +17,6 @@ class FileController{
             throw new AppError({message: "Folder name is required", statusCode: 400});
         }
         const parentId = req.params.parentId ? req.params.parentId : undefined;
-
-
-
 
         // create the folder in the database
         const folderData = {
@@ -159,7 +156,7 @@ class FileController{
             targetType: "FOLDER",
             folderId: folder.id,
         }
-        await auditLogService.createAuditLog(auditLogData);
+        // await auditLogService.createAuditLog(auditLogData);
 
         res.status(200).json({
             status: "success",

@@ -1,6 +1,6 @@
 import trashService from '../../../service/v1/trash/trash.service';
 import {Request, Response, NextFunction} from "express";
-import auditLogService from '../../../service/v1/auditLog/audit_log.service';
+// import auditLogService from '../../../service/v1/auditLog/audit_log.service';
 
 class TrashController {
 
@@ -49,21 +49,21 @@ class TrashController {
 
 
 		if (type === "FOLDER") {
-			await auditLogService.createAuditLog({
-				action: "RESTORE",
-				targetId: itemInTrash.folderId ? itemInTrash.folderId : "",
-				targetType: "FOLDER",
-				folderId: item.id,
-				actorId: req.user.userId,
-			})
+			// await auditLogService.createAuditLog({
+			// 	action: "RESTORE",
+			// 	targetId: itemInTrash.folderId ? itemInTrash.folderId : "",
+			// 	targetType: "FOLDER",
+			// 	folderId: item.id,
+			// 	actorId: req.user.userId,
+			// })
 		} else if (type === "FILE") {
-			await auditLogService.createAuditLog({
-				action: "RESTORE",
-				targetId: trashId,
-				targetType: "FILE",
-				fileId: item.id,
-				actorId: req.user.userId,
-			})
+			// await auditLogService.createAuditLog({
+			// 	action: "RESTORE",
+			// 	targetId: trashId,
+			// 	targetType: "FILE",
+			// 	fileId: item.id,
+			// 	actorId: req.user.userId,
+			// })
 		}
 
 		res.status(200).json({
@@ -106,21 +106,21 @@ class TrashController {
 
 
 		if (type === "FOLDER") {
-			await auditLogService.createAuditLog({
-				action: "DELETE",
-				targetId: itemInTrash.folderId ? itemInTrash.folderId : "",
-				targetType: "FOLDER",
-				folderId: item.id,
-				actorId: req.user.userId,
-			})
+			// await auditLogService.createAuditLog({
+			// 	action: "DELETE",
+			// 	targetId: itemInTrash.folderId ? itemInTrash.folderId : "",
+			// 	targetType: "FOLDER",
+			// 	folderId: item.id,
+			// 	actorId: req.user.userId,
+			// })
 		} else if (type === "FILE") {
-			await auditLogService.createAuditLog({
-				action: "DELETE",
-				targetId: trashId,
-				targetType: "FILE",
-				fileId: item.id,
-				actorId: req.user.userId,
-			})
+			// await auditLogService.createAuditLog({
+			// 	action: "DELETE",
+			// 	targetId: trashId,
+			// 	targetType: "FILE",
+			// 	fileId: item.id,
+			// 	actorId: req.user.userId,
+			// })
 
 			res.status(200).json({
 				status: "success",

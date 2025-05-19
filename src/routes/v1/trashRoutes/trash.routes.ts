@@ -1,5 +1,5 @@
 import {Router} from "express";
-import {checkPermissionLevel, checkRolePermission} from '../../../middleware/permission';
+import {checkRolePermission} from '../../../middleware/permission';
 import {catchAsync} from '../../../lib';
 import trashController from "../../../controller/v1/trash/trash.controller"
 import {Authenticate} from '../../../middleware/authenticate';

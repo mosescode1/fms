@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import fileServiceInstance from "../../../service/v2/files/drive.service";
 import { AppError } from "../../../lib";
 import trashService from '../../../service/v1/trash/trash.service';
-import auditLogService from '../../../service/v1/auditLog/audit_log.service';
+// import auditLogService from '../../../service/v1/auditLog/audit_log.service';
 import driveService from '../../../service/v2/files/drive.service';
 
 class FileController{
@@ -147,7 +147,7 @@ class FileController{
         // add it to the trash folder
         await trashService.createTrashFolder(folderData);
 
-        // add it to audit log
+        // add it to the audit log
         const auditLogData = {
             action: "DELETE",
             targetId: folder.id,
@@ -155,7 +155,7 @@ class FileController{
             targetType: "FOLDER",
             folderId: folder.id,
         }
-        await auditLogService.createAuditLog(auditLogData);
+        // await auditLogService.createAuditLog(auditLogData);
 
         res.status(200).json({
             status: "success",

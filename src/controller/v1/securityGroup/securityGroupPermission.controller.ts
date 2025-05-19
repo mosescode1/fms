@@ -34,7 +34,7 @@ class SecurityGroupPermissionController {
                 throw new AppError({ message: 'File ID is required for file permissions', statusCode: 400 });
             }
 
-            // Check if security group exists
+            // Check if a security group exists
             const securityGroups = await securityService.allSecurityGroups();
             const securityGroup = securityGroups.find(group => group.id === id);
             if (!securityGroup) {
