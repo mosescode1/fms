@@ -8,7 +8,7 @@ import driveService from '../../../service/v2/files/drive.service';
 class FileController{
 
     async createFolder(req: Request, res: Response){
-        // get folder and parent folder from request body
+        // get folder and parent folder from the request body
 
         if (!req.body) {
             throw new AppError({message: "Request Body Missing", statusCode: 400});

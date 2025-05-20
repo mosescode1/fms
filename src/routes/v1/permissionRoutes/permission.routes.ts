@@ -26,7 +26,7 @@ router.post(
 
 // Get permission by ID
 router.get(
-    "{/:id}",
+    "{/:permissionId}",
     Authenticate, 
     checkRolePermission(SUPER_AND_ADMIN),
     catchAsync(permissionController.getPermissionById)
@@ -50,7 +50,7 @@ router.get(
 
 // Delete permission
 router.delete(
-	"{/:id}",
+	"{/:permissionId}",
     Authenticate, 
     checkRolePermission(SUPER_AND_ADMIN),
     catchAsync(permissionController.removePermission)

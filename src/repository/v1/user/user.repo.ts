@@ -87,6 +87,9 @@ class UserRepository {
                 where: {
                     email,
                 },
+                omit: {
+                    password: false,
+                }
             });
         }catch(e: any){
             throw new Error(e.message);

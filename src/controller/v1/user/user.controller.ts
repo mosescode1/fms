@@ -7,7 +7,7 @@ import { Permissions, ResourceType } from '@prisma/client';
 
 class UserController {
 	/**
-	 * Validate email format using regex
+	 * Validate an email format using regex
 	 * @param email - The email address to validate
 	 * @return boolean - Returns true if the email format is valid, false otherwise
 	 * */
@@ -17,7 +17,7 @@ class UserController {
 	}
 
 	/**
-	 * Validate password format using regex
+	 * Validate a password format using regex
 	 * @param password - The password to validate
 	 * @return boolean - Returns true if the password format is valid, false otherwise
 	 * */
@@ -91,7 +91,7 @@ class UserController {
 			});
 		}
 
-		// check if email exist on user and members
+		// check if an email exist on user and members
 		const existingUser = await userService.findUserbyEmail(req.body.email);
 		if (existingUser)
 			throw new AppError({
@@ -123,8 +123,6 @@ class UserController {
 				statusCode: 500,
 			});
 		}
-
-		(newMember.password as any) = undefined;
 
 		res.status(201).json({
 			status: 'success',

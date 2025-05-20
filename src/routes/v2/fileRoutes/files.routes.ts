@@ -3,6 +3,7 @@ import {Authenticate} from "../../../middleware/authenticate";
 import fileController from "../../../controller/v2/file/file.controller";
 import {upload} from "../../../middleware/upload";
 import {catchAsync} from "../../../lib";
+import roles from "../../../types/roles.types";
 import {
 	checkRolePermission,
 	// checkPermissionLevel,
@@ -12,17 +13,14 @@ import {
 
 const router = Router();
 
-const adminOnly = ["ADMIN"]
-const adminAndUser = ["ADMIN", "MEMBER"]
-const member = ["MEMBER"]
 
-// router.get("/",Authenticate, catchAsync(fileController.allFiles));
-// router.get("/folders",Authenticate, checkRolePermission(adminOnly), catchAsync(fileController.allFolders))
-// router.get("/folders/root", Authenticate, checkRolePermission(member), checkPermissionLevel, catchAsync(fileController.getRootFolderPermissionLevel));
-//
-// router.get("/folders{/:folderId}", Authenticate, checkRolePermission(adminAndUser),checkReadAccess, catchAsync(fileController.getFolderById));
-// router.post("/create/folder{/:parentId}",Authenticate,checkRolePermission(adminAndUser), checkWriteAccess, catchAsync(fileController.createFolder));
-// router.post("/upload/file{/:parentId}",Authenticate, upload.single("file"),checkRolePermission(adminAndUser), checkWriteAccess,  catchAsync(fileController.uploadFile));
+router.get("/",Authenticate,checkRolePermission(roles.SUPER_ADMIN), catchAsync(fileController.allFiles));
+router.get("/folders",Authenticate, checkRolePermission(roles.SUPER_ADMIN), catchAsync(fileController.allFolders))
+// router.get("/folders/root", Authenticate, checkRolePermission(roles.ALL), catchAsync(fileController.getRootFolderPermissionLevel));
+
+router.post("/create/folder{/:parentId}",Authenticate,checkRolePermission(roles.ALL),catchAsync(fileController.createFolder));
+router.get("/folders{/:folderId}", Authenticate, checkRolePermission(roles.ALL), catchAsync(fileController.getFolderById));
+router.post("/upload/file{/:parentId}",Authenticate, upload.single("file"),checkRolePermission(roles.ALL),  catchAsync(fileController.uploadFile));
 
 // Mark as deletion
 // router.delete("/folders{/:folderId}", Authenticate, checkRolePermission(adminAndUser), checkPermissionLevel, checkWriteAccess,  catchAsync(fileController.userDeleteFolder));

@@ -16,7 +16,7 @@ import permissionRoutes from "./routes/v1/permissionRoutes/permission.routes"
 // import auditLogRoutes from "./routes/v1/auditLog/audit.log";
 // import trashRoutes from './routes/v1/trashRoutes/trash.routes';
 // v2
-// import fileRoutesV2 from "./routes/v2/fileRoutes/files.routes";
+import fileRoutesV2 from "./routes/v2/fileRoutes/files.routes";
 
 const app: Express = express();
 
@@ -50,13 +50,12 @@ app.get('/api/v1/health', (_, res) => {
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/security-group', securityRoutes);
-// app.use("/api/v1/files", filesRoutes)
-// app.use("/api/v1/auditlog",auditLogRoutes)
 app.use("/api/v1/permissions", permissionRoutes)
 // app.use("/api/v1/trash", trashRoutes)
-
+// app.use("/api/v1/files", filesRoutes)
+// app.use("/api/v1/auditlog",auditLogRoutes)
 // VERSION 2
-// app.use("/api/v2/files", fileRoutesV2);
+app.use("/api/v2/files", fileRoutesV2);
 
 // Unhandled routes
 app.use('/*splat', (req: Request, _: Response, next: NextFunction) => {

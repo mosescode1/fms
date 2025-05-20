@@ -24,12 +24,12 @@ class PermissionController{
 
 	createPermission = async (req:Request, res:Response)=>{
 		try {
-			const { 
-				resourceType, 
-				permissions, 
-				folderId, 
-				fileId, 
-				accountId, 
+			const {
+				resourceType,
+				permissions,
+				folderId,
+				fileId,
+				accountId,
 				groupId,
 				inherited = false 
 			} = req.body;
@@ -94,16 +94,17 @@ class PermissionController{
 
 	getPermissionById = async (req:Request, res:Response) => {
 		try {
-			const { id } = req.params;
 
-			if (!id) {
+			const { permissionId } = req.params;
+
+			if (!permissionId) {
 				return res.status(400).json({
 					status: 'error',
 					message: "Permission ID is required"
 				});
 			}
 
-			const permission = await permissionService.getPermissionById(id);
+			const permission = await permissionService.getPermissionById(permissionId);
 
 			res.status(200).json({
 				status: 'success',
@@ -175,16 +176,16 @@ class PermissionController{
 
 	removePermission = async (req:Request, res:Response)=>{
 		try {
-			const { id } = req.params;
+			const { permissionId } = req.params;
 
-			if (!id) {
+			if (!permissionId) {
 				return res.status(400).json({
 					status: 'error',
 					message: "Permission ID is required"
 				});
 			}
 
-			await permissionService.removePermission(id);
+			await permissionService.removePermission(permissionId);
 
 			res.status(200).json({
 				status: 'success',

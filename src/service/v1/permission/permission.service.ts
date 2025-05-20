@@ -36,13 +36,24 @@ class PermissionService{
 
 			// For folder permissions
 			if (permissionData.resourceType === ResourceType.FOLDER && permissionData.folderId) {
-				// Check if folder exists
+				// Check if the folder exists
 				const folder = await fileRepo.getFolderById(permissionData.folderId);
 				if (!folder) {
 					throw new AppError({message: "Folder does not exist", statusCode: 404});
 				}
 
-				// Check if user already has permission on this folder
+				// check if the folder already has permission
+				if (!permissionData.accountId) {
+					const existingPermission = await permissionRepo.getGroupPermissionByFolderId(
+						permissionData.groupId,
+						permissionData.folderId
+					);
+					if (existingPermission) {
+						throw new AppError({message: "Permission already set for this group on this folder", statusCode: 400});
+					}
+				}
+
+				// Check if the user already has permission on this folder
 				if (permissionData.accountId) {
 					const existingPermission = await permissionRepo.getUserPermissionByFolderId(
 						permissionData.accountId, 
@@ -62,7 +73,7 @@ class PermissionService{
 					throw new AppError({message: "File does not exist", statusCode: 404});
 				}
 
-				// Check if user already has permission on this file
+				// Check if the user already has permission on this file
 				if (permissionData.accountId) {
 					const existingPermission = await permissionRepo.getUserPermissionByFileId(
 						permissionData.accountId, 

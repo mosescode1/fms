@@ -107,7 +107,6 @@ class AuthController {
 		});
 		// Send response
 
-		(registeredUser.password as any) = undefined;
 		res.status(200).json({
 			data: {
 				user: registeredUser,

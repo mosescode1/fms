@@ -131,6 +131,20 @@ class PermissionRepo{
 			throw new Error(error.message);
 		}
 	}
+
+
+	async getGroupPermissionByFolderId(groupId: string | undefined, folderId: string) {
+		try{
+			return await prisma.aclEntry.findMany({
+				where:{
+					groupId: groupId,
+					folderId: folderId
+				}
+			})
+		}catch (error:any){
+			throw new Error(error.message);
+		}
+	}
 }
 
 const permissionRepo = new PermissionRepo()
