@@ -2,6 +2,7 @@ import permissionRepo from '../../../repository/v1/permission/permission.repo';
 import {AppError} from '../../../lib';
 import fileRepo from '../../../repository/v1/files/file.repo';
 import { Permissions, ResourceType } from '@prisma/client';
+import userRepo from '../../../repository/v1/user/user.repo';
 
 type AclEntryDto = {
     resourceType: ResourceType;
@@ -98,11 +99,19 @@ class PermissionService{
 
 	async getUserPermission(userId: string) {
 		try{
-			const userPermissions = await permissionRepo.getUserPermission(userId);
-			if (!userPermissions || userPermissions.length === 0) {
-				throw new AppError({message: "No permissions found for this user", statusCode: 404});
+			// check if the user exists
+			const user = await userRepo.findUserById(userId);
+			if (!user) {
+				throw new AppError({message: "User does not exist", statusCode: 404});
 			}
-			return userPermissions;
+
+			// check if the user is a super_admin
+			if (user.role === "SUPER_ADMIN") {
+				return "SUPER_ADMIN has all permissions";
+			}
+
+			return await permissionRepo.getUserPermission(userId);
+
 		}catch (error:any){
 			if (error instanceof AppError) {
 				throw error;
