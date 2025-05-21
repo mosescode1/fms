@@ -4,4 +4,3 @@ build
 .idea
 data
 others/other.prisma
-.env
