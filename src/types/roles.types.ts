@@ -1,7 +1,7 @@
 const SUPER_ADMIN = ['SUPER_ADMIN'];
 const SUPER_AND_ADMIN = ['SUPER_ADMIN', 'ADMIN'];
-const MEMBERS = ['MEMBERS'];
-const ALL = ['SUPER_ADMIN', 'ADMIN', 'MEMBERS'];
+const MEMBERS = ['MEMBER'];
+const ALL = ['SUPER_ADMIN', 'ADMIN', 'MEMBER'];
 
 export default {
 	SUPER_ADMIN,
