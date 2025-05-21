@@ -48,7 +48,7 @@ class PermissionService{
 						permissionData.groupId,
 						permissionData.folderId
 					);
-					if (existingPermission) {
+					if (existingPermission.length > 0) {
 						throw new AppError({message: "Permission already set for this group on this folder", statusCode: 400});
 					}
 				}

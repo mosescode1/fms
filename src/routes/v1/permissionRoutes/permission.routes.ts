@@ -2,7 +2,7 @@ import {Router} from "express"
 import {Authenticate} from '../../../middleware/authenticate';
 import permissionController from "../../../controller/v1/permmission/permission.controller"
 import {catchAsync} from '../../../lib';
-import { checkRolePermission } from '../../../middleware/permission';
+import { checkRolePermission, checkAclEntryResources } from '../../../middleware/permission';
 import  roles  from '../../../types/roles.types';
 
 const router = Router();
@@ -16,11 +16,12 @@ router.get(
     catchAsync(permissionController.getAllPermission)
 );
 
-// Create a new permission
+// Create a new permission on group or member
 router.post(
     "/", 
     Authenticate, 
     checkRolePermission(SUPER_AND_ADMIN),
+    checkAclEntryResources,
     catchAsync(permissionController.createPermission)
 );
 

@@ -14,7 +14,7 @@ class fileRepository {
         });
 
         while (current) {
-            segments.unshift(current.name); // Add current folder to the front
+            segments.unshift(current.name); // Add a current folder to the front
             if (!current.parentId) break;   // If no parent, it's the root — stop here
             current = await prisma.folder.findUnique({
                 where: { id: current.parentId },
@@ -34,7 +34,7 @@ class fileRepository {
             data: { fullPath },
         });
 
-        // 2. Update all file directly in this folder
+        // 2. Update all the files directly in this folder
         await prisma.file.updateMany({
             where: { folderId },
             data: {
@@ -42,7 +42,7 @@ class fileRepository {
             },
         });
 
-        // 3. Get and recursively update all child folder
+        // 3. Get and recursively update all child folders
         const children = await prisma.folder.findMany({
             where: { parentId: folderId },
             select: { id: true },
@@ -182,7 +182,7 @@ class fileRepository {
                 },
             });
 
-            // Update path for folder and descendants
+            // Update the path for folder and descendants
             await this.updateFullPathRecursively(folder.id);
             return folder
         } catch (err) {
@@ -216,7 +216,7 @@ class fileRepository {
 
     async getFolderById(folderId: string): Promise<any> {
         try {
-            return await prisma.folder.findUnique({
+            return  await prisma.folder.findUnique({
                 where: { id: folderId , deleted: false},
                 include: {
                     files: {where:{deleted: false}},
@@ -231,7 +231,7 @@ class fileRepository {
 
     async getFileById(fileId: string): Promise<any> {
         try {
-            return await prisma.file.findUnique({
+            return  prisma.file.findUnique({
                 where: { id: fileId, deleted:false },
             });
         } catch (error:any) {
@@ -242,7 +242,7 @@ class fileRepository {
     async getFolderByPath(fullPath:string, nullValue: boolean): Promise<any> {
 
         if (nullValue) {
-            return await prisma.folder.findFirst({
+            return  prisma.folder.findFirst({
                 where: {
                     fullPath: fullPath,
                     parentId: null,
@@ -250,15 +250,15 @@ class fileRepository {
                 }
             })
         }
-        return await prisma.folder.findFirst({
+        return  prisma.folder.findFirst({
             where: {
                 fullPath: fullPath,
             }
         })
     }
 
-    async getFileByPath(remotePath: string) {
-        return await prisma.file.findFirst({
+     async getFileByPath(remotePath: string) {
+        return  prisma.file.findFirst({
             where: {
                 filePath: remotePath,
                 deleted: false
@@ -267,7 +267,7 @@ class fileRepository {
     }
 
     async updateDeletedFolder(folderData: FolderData) {
-        return await prisma.folder.update({
+        return  prisma.folder.update({
             where: {
                 id: folderData.folderId,
             },
@@ -276,6 +276,65 @@ class fileRepository {
             }
         })
     }
+
+    async accessFiles(userId: string) {
+        // Get all group IDs the user is a member of
+        const userGroups = await prisma.groupMember.findMany({
+            where: { accountId: userId },
+            select: { groupId: true },
+        });
+        const groupIds = userGroups.map(g => g.groupId);
+
+        // Fetch files
+        const files = await prisma.file.findMany({
+            where: {
+                deleted: false,
+                OR: [
+                    { accountId: userId }, // Ownership
+                    {
+                        acls: {
+                            some: {
+                                OR: [
+                                    { accountId: userId },
+                                    { groupId: { in: groupIds } }, // Group ACLs
+                                ],
+                            },
+                        },
+                    },
+                ],
+            },
+            include: {
+                acls: true,
+            },
+        });
+
+        // Fetch folders
+        const folders = await prisma.folder.findMany({
+            where: {
+                deleted: false,
+                OR: [
+                    { accountId: userId }, // Ownership
+                    {
+                        AclEntry: {
+                            some: {
+                                OR: [
+                                    { accountId: userId },
+                                    { groupId: { in: groupIds } }, // Group ACLs
+                                ],
+                            },
+                        },
+                    },
+                ],
+            },
+            include: {
+                AclEntry: true,
+            },
+        });
+
+        return [...files, ...folders];
+    }
+
+
 }
 
 

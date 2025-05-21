@@ -6,9 +6,9 @@ import {Authenticate} from '../../../middleware/authenticate';
 
 const router = Router();
 
-const adminOnly  = ["ADMIN"]
-router.get("/", Authenticate, checkRolePermission(adminOnly), catchAsync(trashController.getAllTrashedItems));
-router.put("/restore{/:itemId}", Authenticate, checkRolePermission(adminOnly), catchAsync(trashController.restoreTrashItem))
-router.delete("/delete{/:trashId}", Authenticate, checkRolePermission(adminOnly), catchAsync(trashController.permanentlyDeleteItem));
+// const adminOnly  = ["ADMIN", "SUPER_ADMIN"]
+// router.get("/", Authenticate, checkFileAccessPermission, checkRolePermission(adminOnly), catchAsync(trashController.getAllTrashedItems));
+// router.put("/restore{/:itemId}", Authenticate, checkFileAccessPermission, checkRolePermission(adminOnly), catchAsync(trashController.restoreTrashItem))
+// router.delete("/delete{/:trashId}", Authenticate, checkFileAccessPermission, checkRolePermission(adminOnly), catchAsync(trashController.permanentlyDeleteItem));
 
 export default router;

@@ -162,6 +162,18 @@ class FileController{
             message: "Folder deleted successfully"
         });
     }
+
+	async accessFiles(req:Request, res:Response) {
+        const userId = req.user.userId;
+        const files = await fileServiceInstance.accessFiles(userId);
+        res.status(200).json({
+            status: "success",
+            data: {
+                files
+            }
+        });
+
+	}
 }
 
 const fileController = new FileController();

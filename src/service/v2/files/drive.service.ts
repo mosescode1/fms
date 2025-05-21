@@ -141,9 +141,18 @@ class fileService {
 
 	async userDeleteFolder(folderData: FolderData) {
 		try{
-			return fileRepo.updateDeletedFolder(folderData);
+			return await fileRepo.updateDeletedFolder(folderData);
 		}catch (error: any){
 			console.error("Error deleting folder", error);
+			throw new Error(error.message);
+		}
+	}
+
+	async accessFiles(userId: string) {
+		try{
+			return await fileRepo.accessFiles(userId);
+		}catch (error: any){
+			console.error("Error fetching user files", error);
 			throw new Error(error.message);
 		}
 	}
