@@ -1,5 +1,6 @@
 import {googleDrive} from "../../../lib/";
 import streamifier from 'streamifier';
+import { retryWithBackoff } from "../../../lib/retry";
 
 type FileData = {
 	name: string;
@@ -11,6 +12,22 @@ type FileData = {
 	remotePath?: string;
 }
 
+/**
+ * Checks if the error is related to token expiration and throws a more descriptive error if it is.
+ * @param error - The error to check.
+ * @throws Error with a more descriptive message if the error is related to token expiration.
+ */
+function handleTokenExpirationError(error: any): void {
+	if (error.message.includes('invalid_grant') || 
+		(error.response && error.response.data && 
+		 error.response.data.error === 'invalid_grant')) {
+		throw new Error(
+			"Google Drive API token has expired or been revoked. " +
+			"Please update the GOOGLE_REFRESH_TOKEN in your .env file with a new token."
+		);
+	}
+}
+
 class GoogleDriveRepo{
 
 	async createFolder(folderData: any) {
@@ -18,25 +35,37 @@ class GoogleDriveRepo{
 			const folderMetadata = {
 				name: folderData.folderName,
 				mimeType: "application/vnd.google-apps.folder",
-				parents: [folderData.parentId],
+				parents: folderData.parentId ? [folderData.parentId] : undefined,
 			};
 
-			const folder = await googleDrive.files.create({
-				requestBody: folderMetadata ? folderMetadata : {},
-				fields: "id, webViewLink, webContentLink, name, size",
+			// Create folder with retry
+			const folder = await retryWithBackoff(async () => {
+				return await googleDrive.files.create({
+					requestBody: folderMetadata,
+					fields: "id, webViewLink, webContentLink, name, size",
+				});
 			});
 
-			// grant access to the folder
-			await googleDrive.permissions.create({
-				fileId: folder.data.id ? folder.data.id : "",
-				requestBody: {
-					role: "reader",
-					type: "anyone",
-				},
-			});
+			// Grant access to the folder with retry
+			if (folder.data.id) {
+				await retryWithBackoff(async () => {
+					return await googleDrive.permissions.create({
+						fileId: folder.data.id ? folder.data.id : "",
+						requestBody: {
+							role: "reader",
+							type: "anyone",
+						},
+					});
+				});
+			}
+
 			return folder;
 		} catch (error:any) {
 			console.error("Error creating folder", error);
+
+			// Check if the error is related to token expiration
+			handleTokenExpirationError(error);
+
 			throw new Error(error.message);
 		}
 	}
@@ -50,9 +79,10 @@ class GoogleDriveRepo{
 	 */
 
 	async uploadFile(data: FileData) {
-		try{
-			const response = await googleDrive.files.create(
-				{
+		try {
+			// Upload file with retry
+			const response = await retryWithBackoff(async () => {
+				return await googleDrive.files.create({
 					requestBody: {
 						name: data.name,
 						mimeType: data.mimetype,
@@ -63,20 +93,29 @@ class GoogleDriveRepo{
 						body: streamifier.createReadStream(data.localSource),
 					},
 					fields: "id, webViewLink, webContentLink, name, size",
-				}
-			);
-
-			// grant access to the file
-			await googleDrive.permissions.create({
-				fileId: response.data.id ? response.data.id : "",
-				requestBody: {
-					role: "reader",
-					type: "anyone",
-				},
+				});
 			});
+
+			// Grant access to the file with retry
+			if (response.data.id) {
+				await retryWithBackoff(async () => {
+					return await googleDrive.permissions.create({
+						fileId: response.data.id ? response.data.id : "",
+						requestBody: {
+							role: "reader",
+							type: "anyone",
+						},
+					});
+				});
+			}
+
 			return response;
-		}catch(error:any){
+		} catch (error:any) {
 			console.error("Error uploading file", error);
+
+			// Check if the error is related to token expiration
+			handleTokenExpirationError(error);
+
 			throw new Error(error.message);
 		}
 	}
@@ -84,13 +123,21 @@ class GoogleDriveRepo{
 
 	async getFileById(fileId: string) {
 		try {
-			const file = await googleDrive.files.get({
-				fileId: fileId,
-				fields: "id, webViewLink, webContentLink, name, size",
+			// Get file with retry
+			const file = await retryWithBackoff(async () => {
+				return await googleDrive.files.get({
+					fileId: fileId,
+					fields: "id, webViewLink, webContentLink, name, size",
+				});
 			});
+
 			return file;
 		} catch (error:any) {
 			console.error("Error getting file", error);
+
+			// Check if the error is related to token expiration
+			handleTokenExpirationError(error);
+
 			throw new Error(error.message);
 		}
 	}

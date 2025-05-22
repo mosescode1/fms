@@ -190,28 +190,56 @@ class fileRepository {
         }
     }
 
-    async allFiles(): Promise<any[]> {
+    async allFiles(skip?: number, limit?: number): Promise<{ files: any[], total: number }> {
         try {
-            return await prisma.file.findMany({
-                where:{
-                    deleted: false
-                },
-                orderBy:{
-                    uploadedAt: 'desc'
-                }
-            })
-        }catch (error:any){
+            const [files, total] = await Promise.all([
+                prisma.file.findMany({
+                    where: {
+                        deleted: false
+                    },
+                    orderBy: {
+                        uploadedAt: 'desc'
+                    },
+                    skip: skip,
+                    take: limit
+                }),
+                prisma.file.count({
+                    where: {
+                        deleted: false
+                    }
+                })
+            ]);
+
+            return { files, total };
+        } catch (error: any) {
             throw new Error(error.message);
         }
     }
 
 
-    async allFolders(): Promise<any[]> {
-       try{
-            return await prisma.folder.findMany({where:{parentId: null, deleted: false}});
-       }catch (error:any){
-              throw new Error(error.message);
-       }
+    async allFolders(skip?: number, limit?: number): Promise<{ folders: any[], total: number }> {
+        try {
+            const [folders, total] = await Promise.all([
+                prisma.folder.findMany({
+                    where: {
+                        parentId: null,
+                        deleted: false
+                    },
+                    skip: skip,
+                    take: limit
+                }),
+                prisma.folder.count({
+                    where: {
+                        parentId: null,
+                        deleted: false
+                    }
+                })
+            ]);
+
+            return { folders, total };
+        } catch (error: any) {
+            throw new Error(error.message);
+        }
     }
 
     async getFolderById(folderId: string): Promise<any> {
@@ -277,17 +305,17 @@ class fileRepository {
         })
     }
 
-    async accessFiles(userId: string) {
-        // Get all group IDs the user is a member of
-        const userGroups = await prisma.groupMember.findMany({
-            where: { accountId: userId },
-            select: { groupId: true },
-        });
-        const groupIds = userGroups.map(g => g.groupId);
+    async accessFiles(userId: string, skip?: number, limit?: number): Promise<{ items: any[], total: number }> {
+        try {
+            // Get all group IDs the user is a member of
+            const userGroups = await prisma.groupMember.findMany({
+                where: { accountId: userId },
+                select: { groupId: true },
+            });
+            const groupIds = userGroups.map(g => g.groupId);
 
-        // Fetch files
-        const files = await prisma.file.findMany({
-            where: {
+            // Common conditions for files and folders
+            const fileConditions = {
                 deleted: false,
                 OR: [
                     { accountId: userId }, // Ownership
@@ -302,15 +330,9 @@ class fileRepository {
                         },
                     },
                 ],
-            },
-            include: {
-                acls: true,
-            },
-        });
+            };
 
-        // Fetch folders
-        const folders = await prisma.folder.findMany({
-            where: {
+            const folderConditions = {
                 deleted: false,
                 OR: [
                     { accountId: userId }, // Ownership
@@ -325,13 +347,83 @@ class fileRepository {
                         },
                     },
                 ],
-            },
-            include: {
-                AclEntry: true,
-            },
-        });
+            };
 
-        return [...files, ...folders];
+            // Get total counts first
+            const [fileCount, folderCount] = await Promise.all([
+                prisma.file.count({ where: fileConditions }),
+                prisma.folder.count({ where: folderConditions })
+            ]);
+
+            const total = fileCount + folderCount;
+
+            // If pagination is requested
+            if (skip !== undefined && limit !== undefined) {
+                // Determine how many files and folders to fetch
+                let fileSkip = 0;
+                let fileLimit = 0;
+                let folderSkip = 0;
+                let folderLimit = 0;
+
+                if (skip < fileCount) {
+                    // Skip is within files range
+                    fileSkip = skip;
+                    fileLimit = Math.min(limit, fileCount - fileSkip);
+                    folderSkip = 0;
+                    folderLimit = limit - fileLimit;
+                } else {
+                    // Skip is beyond files range, only fetch folders
+                    fileSkip = 0;
+                    fileLimit = 0;
+                    folderSkip = skip - fileCount;
+                    folderLimit = limit;
+                }
+
+                // Fetch files and folders with pagination
+                const [files, folders] = await Promise.all([
+                    fileLimit > 0 ? prisma.file.findMany({
+                        where: fileConditions,
+                        include: { acls: true },
+                        skip: fileSkip,
+                        take: fileLimit,
+                        orderBy: { uploadedAt: 'desc' }
+                    }) : [],
+                    folderLimit > 0 ? prisma.folder.findMany({
+                        where: folderConditions,
+                        include: { AclEntry: true },
+                        skip: folderSkip,
+                        take: folderLimit,
+                        orderBy: { createdAt: 'desc' }
+                    }) : []
+                ]);
+
+                return { 
+                    items: [...files, ...folders],
+                    total
+                };
+            } else {
+                // No pagination, fetch all
+                const [files, folders] = await Promise.all([
+                    prisma.file.findMany({
+                        where: fileConditions,
+                        include: { acls: true },
+                        orderBy: { uploadedAt: 'desc' }
+                    }),
+                    prisma.folder.findMany({
+                        where: folderConditions,
+                        include: { AclEntry: true },
+                        orderBy: { createdAt: 'desc' }
+                    })
+                ]);
+
+                return { 
+                    items: [...files, ...folders],
+                    total
+                };
+            }
+        } catch (error: any) {
+            throw new Error(error.message);
+        }
     }
 
 

@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import fileServiceInstance from "../../../service/v2/files/drive.service";
 import { AppError } from "../../../lib";
+import { getPaginationParams, createPaginatedResponse } from "../../../lib/pagination";
 import trashService from '../../../service/v1/trash/trash.service';
 // import auditLogService from '../../../service/v1/auditLog/audit_log.service';
 import driveService from '../../../service/v2/files/drive.service';
@@ -71,23 +72,27 @@ class FileController{
     }
 
     async allFiles(req: Request, res: Response){
-        const files = await fileServiceInstance.allFiles();
+        const { page, limit, skip } = getPaginationParams(req);
+        const { files, total } = await fileServiceInstance.allFiles(skip, limit);
+
+        const paginatedResponse = createPaginatedResponse(files, total, { page, limit, skip });
+
         res.status(200).json({
             status: "success",
-            data: {
-                files
-            }
+            ...paginatedResponse
         });
     }
 
 
     async allFolders(req: Request, res: Response){
-        const folders = await fileServiceInstance.allFolders();
+        const { page, limit, skip } = getPaginationParams(req);
+        const { folders, total } = await fileServiceInstance.allFolders(skip, limit);
+
+        const paginatedResponse = createPaginatedResponse(folders, total, { page, limit, skip });
+
         res.status(200).json({
             status: "success",
-            data: {
-                folders
-            }
+            ...paginatedResponse
         });
     }
 
@@ -165,14 +170,15 @@ class FileController{
 
 	async accessFiles(req:Request, res:Response) {
         const userId = req.user.userId;
-        const files = await fileServiceInstance.accessFiles(userId);
+        const { page, limit, skip } = getPaginationParams(req);
+        const { items, total } = await fileServiceInstance.accessFiles(userId, skip, limit);
+
+        const paginatedResponse = createPaginatedResponse(items, total, { page, limit, skip });
+
         res.status(200).json({
             status: "success",
-            data: {
-                files
-            }
+            ...paginatedResponse
         });
-
 	}
 }
 

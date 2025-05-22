@@ -4,6 +4,7 @@ import streamifier from 'streamifier';
 import Readable from "stream"
 import {FolderData} from '../../../types/trash.types';
 import googleDriveRepo from '../../../repository/v2/google-drive/google.drive.repo';
+import cacheService from '../../../lib/cache';
 
 type FileData = {
 	name: string;
@@ -45,11 +46,13 @@ class fileService {
 
 	async createFolder(folderData: any) {
 		try {
-
 			if (!folderData.parentId) {
 				folderData["remotePath"] = this.rootPath + `/${folderData.folderName}`;
-			}else{
-				folderData["remotePath"]= await this.getParentFolderPath(folderData.parentId, folderData.folderName)
+			} else {
+				folderData["remotePath"] = await this.getParentFolderPath(folderData.parentId, folderData.folderName);
+
+				// Invalidate parent folder cache since its children will change
+				cacheService.delete(`folder:${folderData.parentId}`);
 			}
 
 			// Check if the folder already exists
@@ -58,11 +61,13 @@ class fileService {
 			}
 
 			// Create the folder on the server
-			// TODO create folder on google drive
-			const resp = await googleDriveRepo.createFolder(folderData)
+			const resp = await googleDriveRepo.createFolder(folderData);
+
 			// Save the folder in the repository
 			folderData["id"] = resp.data.id;
-			return await fileRepo.createFolder(folderData);
+			const newFolder = await fileRepo.createFolder(folderData);
+
+			return newFolder;
 		} catch (error: any) {
 			throw new AppError({ message: error.message, statusCode: error.statusCode || 500 });
 		}
@@ -74,10 +79,12 @@ class fileService {
 		let remotePath;
 
 		try {
+			if (fileData.folderId) {
+				remotePath = await this.getParentFolderPath(fileData.folderId, fileData.name);
 
-			if (fileData.folderId){
-				remotePath = await this.getParentFolderPath(fileData.folderId, fileData.name)
-			}else{
+				// Invalidate parent folder cache since its children will change
+				cacheService.delete(`folder:${fileData.folderId}`);
+			} else {
 				remotePath = this.rootPath;
 			}
 
@@ -88,43 +95,63 @@ class fileService {
 				throw new AppError({ message: "File already exists", statusCode: 409 });
 			}
 
+			// Upload file to Google Drive
+			const data = await googleDriveRepo.uploadFile(fileData);
 
-			// create file on the server
-			// TODO upload file to google drive
-			const data =  await googleDriveRepo.uploadFile(fileData)
-
-			console.log("file data", data)
+			// Save file metadata
 			fileData['id'] = data.data.id;
 			fileData['webViewLink'] = data.data.webViewLink;
 			fileData['webContentLink'] = data.data.webContentLink;
-			return await fileRepo.uploadFile(fileData);
+
+			// Save to database
+			const newFile = await fileRepo.uploadFile(fileData);
+
+			return newFile;
 		} catch (error: any) {
-			console.error(error)
+			console.error("Error uploading file:", error);
 			throw new AppError({ message: error.message, statusCode: error.statusCode || 500 });
 		}
 	}
 
-	async allFiles() {
+	async allFiles(skip?: number, limit?: number) {
 		try {
-			return await fileRepo.allFiles();
+			return await fileRepo.allFiles(skip, limit);
 		} catch (error:any) {
-			throw new Error(error.message);
+			throw new AppError({ message: error.message, statusCode: error.statusCode || 500 });
 		}
 	}
 
-	async allFolders() {
+	async allFolders(skip?: number, limit?: number) {
 		try {
-			return await fileRepo.allFolders();
+			return await fileRepo.allFolders(skip, limit);
 		} catch (error:any) {
-			throw new Error(error.message);
+			throw new AppError({ message: error.message, statusCode: error.statusCode || 500 });
 		}
 	}
 
 	async getFolderById(folderId: string) {
 		try {
-			return await fileRepo.getFolderById(folderId);
+			// Use cache for folder data with a 5-minute TTL
+			return await cacheService.getOrSet(
+				`folder:${folderId}`,
+				async () => await fileRepo.getFolderById(folderId),
+				300 // 5 minutes
+			);
 		} catch (error:any) {
-			throw new Error(error.message);
+			throw new AppError({ message: error.message, statusCode: error.statusCode || 500 });
+		}
+	}
+
+	async getFileById(fileId: string) {
+		try {
+			// Use cache for file data with a 5-minute TTL
+			return await cacheService.getOrSet(
+				`file:${fileId}`,
+				async () => await fileRepo.getFileById(fileId),
+				300 // 5 minutes
+			);
+		} catch (error:any) {
+			throw new AppError({ message: error.message, statusCode: error.statusCode || 500 });
 		}
 	}
 
@@ -140,20 +167,25 @@ class fileService {
 	}
 
 	async userDeleteFolder(folderData: FolderData) {
-		try{
-			return await fileRepo.updateDeletedFolder(folderData);
-		}catch (error: any){
+		try {
+			const result = await fileRepo.updateDeletedFolder(folderData);
+
+			// Invalidate folder cache
+			cacheService.delete(`folder:${folderData.folderId}`);
+
+			return result;
+		} catch (error: any) {
 			console.error("Error deleting folder", error);
-			throw new Error(error.message);
+			throw new AppError({ message: error.message, statusCode: error.statusCode || 500 });
 		}
 	}
 
-	async accessFiles(userId: string) {
-		try{
-			return await fileRepo.accessFiles(userId);
-		}catch (error: any){
+	async accessFiles(userId: string, skip?: number, limit?: number) {
+		try {
+			return await fileRepo.accessFiles(userId, skip, limit);
+		} catch (error: any) {
 			console.error("Error fetching user files", error);
-			throw new Error(error.message);
+			throw new AppError({ message: error.message, statusCode: error.statusCode || 500 });
 		}
 	}
 }
