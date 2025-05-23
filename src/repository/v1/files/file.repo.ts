@@ -427,6 +427,13 @@ class fileRepository {
     }
 
 
+    async getFileByName(name: string) {
+        return prisma.file.findFirst({
+            where: {
+                fileName: name
+            }
+        });
+    }
 }
 
 

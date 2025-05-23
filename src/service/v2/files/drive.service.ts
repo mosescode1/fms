@@ -88,11 +88,17 @@ class fileService {
 				remotePath = this.rootPath;
 			}
 
+			console.log(remotePath, "remotePath" );
 			fileData.remotePath = remotePath;
 
 			// Check if the file already exists
 			if (await fileRepo.getFileByPath(fileData.remotePath)) {
 				throw new AppError({ message: "File already exists", statusCode: 409 });
+			}
+
+			// check the file name already exists
+			if (await fileRepo.getFileByName(fileData.name)) {
+				throw new AppError({ message: "File name already exists", statusCode: 409 });
 			}
 
 			// Upload file to Google Drive

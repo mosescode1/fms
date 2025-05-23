@@ -18,13 +18,22 @@ router.get(
 	checkRolePermission(roles.SUPER_ADMIN),
 	catchAsync(fileController.allFiles)
 );
+
 router.get(
 	'/folders',
 	Authenticate,
 	checkRolePermission(roles.SUPER_ADMIN),
 	catchAsync(fileController.allFolders)
 );
-//
+
+router.get(
+	'{/:fileId}',
+	Authenticate,
+	checkRolePermission(roles.ALL),
+	checkPermission(Permissions.MANAGE_PERMISSIONS),
+	catchAsync(fileController.getFileById)
+);
+
 router.post(
 	'/create/folder{/:parentId}',
 	Authenticate,
@@ -39,6 +48,8 @@ router.get(
 	checkPermission(Permissions.MANAGE_PERMISSIONS),
 	catchAsync(fileController.getFolderById)
 );
+
+
 router.post(
 	'/upload/file{/:resourceId}',
 	Authenticate,

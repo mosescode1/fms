@@ -64,10 +64,11 @@ class FileController{
             userId: req.user.userId,
         };
 
-        await driveService.uploadFile(fileData);
+        const data = await driveService.uploadFile(fileData);
 
         res.status(200).json({
             message: 'File uploaded to remote server directly from memory',
+            file: data
         });
     }
 
@@ -180,6 +181,27 @@ class FileController{
             ...paginatedResponse
         });
 	}
+
+    async getFileById(req: Request, res: Response) {
+        const fileId = req.params.fileId;
+
+        if (!fileId) {
+            throw new AppError({message: "File ID is required", statusCode: 400});
+        }
+
+        const file = await fileServiceInstance.getFileById(fileId);
+
+        if (!file) {
+            throw new AppError({message: "File not found", statusCode: 404});
+        }
+
+        res.status(200).json({
+            status: "success",
+            data: {
+                file
+            }
+        });
+    }
 }
 
 const fileController = new FileController();
