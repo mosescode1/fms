@@ -58,7 +58,7 @@ class FileController{
             mimetype,
             size,
             encoding,
-            folderId: req.params.parentId,
+            folderId: req.params.resourceId,
             remotePath,
             localSource: buffer,
             userId: req.user.userId,
@@ -98,7 +98,7 @@ class FileController{
 
 
     async getFolderById(req: Request, res: Response){
-        const data = await fileServiceInstance.getFolderById(req.params.folderId);
+        const data = await fileServiceInstance.getFolderById(req.params.resourceId);
         res.status(200).json({
             data
         })

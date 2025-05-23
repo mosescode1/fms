@@ -1,27 +1,60 @@
-import Router from "express";
-import {Authenticate} from "../../../middleware/authenticate";
-import fileController from "../../../controller/v2/file/file.controller";
-import {upload} from "../../../middleware/upload";
-import {catchAsync} from "../../../lib";
-import roles from "../../../types/roles.types";
+import Router from 'express';
+import { Authenticate } from '../../../middleware/authenticate';
+import fileController from '../../../controller/v2/file/file.controller';
+import { upload } from '../../../middleware/upload';
+import { catchAsync } from '../../../lib';
+import roles from '../../../types/roles.types';
 import { Permissions } from '@prisma/client';
 import {
 	checkRolePermission,
 	checkPermission,
-} from "../../../middleware/permission";
+} from '../../../middleware/permission';
 
 const router = Router();
 
-
-router.get("/",Authenticate, checkRolePermission(roles.SUPER_ADMIN), catchAsync(fileController.allFiles));
-router.get("/folders",Authenticate, checkRolePermission(roles.SUPER_ADMIN), catchAsync(fileController.allFolders))
+router.get(
+	'/',
+	Authenticate,
+	checkRolePermission(roles.SUPER_ADMIN),
+	catchAsync(fileController.allFiles)
+);
+router.get(
+	'/folders',
+	Authenticate,
+	checkRolePermission(roles.SUPER_ADMIN),
+	catchAsync(fileController.allFolders)
+);
 //
-router.post("/create/folder{/:parentId}",Authenticate,  checkRolePermission(roles.ALL), checkPermission(Permissions.MANAGE_PERMISSIONS) ,catchAsync(fileController.createFolder));
-router.get("/folders{/:folderId}", Authenticate, checkRolePermission(roles.ALL), checkPermission(Permissions.MANAGE_PERMISSIONS), catchAsync(fileController.getFolderById));
-router.post("/upload/file{/:parentId}",Authenticate, upload.single("file"), checkRolePermission(roles.ALL),checkPermission(Permissions.MANAGE_PERMISSIONS), catchAsync(fileController.uploadFile));
+router.post(
+	'/create/folder{/:parentId}',
+	Authenticate,
+	checkRolePermission(roles.ALL),
+	checkPermission(Permissions.MANAGE_PERMISSIONS),
+	catchAsync(fileController.createFolder)
+);
+router.get(
+	'/folders{/:resourceId}',
+	Authenticate,
+	checkRolePermission(roles.ALL),
+	checkPermission(Permissions.MANAGE_PERMISSIONS),
+	catchAsync(fileController.getFolderById)
+);
+router.post(
+	'/upload/file{/:resourceId}',
+	Authenticate,
+	upload.single('file'),
+	checkRolePermission(roles.ALL),
+	checkPermission(Permissions.MANAGE_PERMISSIONS),
+	catchAsync(fileController.uploadFile)
+);
 
 // get all files and folder that a user has access to
-router.get("/access", Authenticate, checkRolePermission(roles.ALL), catchAsync(fileController.accessFiles));
+router.get(
+	'/access',
+	Authenticate,
+	checkRolePermission(roles.ALL),
+	catchAsync(fileController.accessFiles)
+);
 
 // Mark as deletion
 // router.delete("/folders{/:folderId}", Authenticate, checkRolePermission(adminAndUser), checkPermissionLevel, checkWriteAccess,catchAsync(fileController.userDeleteFolder));

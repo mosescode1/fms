@@ -24,35 +24,53 @@ export const hasPermission = async (
 	resourceId: string,
 	requiredPermission: Permissions
 ): Promise<boolean> => {
+	// check if the user has the permission if not check the group
+
 	// Get user's group IDs
 	const groupMemberships = await prisma.groupMember.findMany({
 		where: { accountId: userId },
 		select: { groupId: true },
 	});
 
-	const groupIds = groupMemberships.map(g => g.groupId);
+	const groupIds = groupMemberships.map((g) => g.groupId);
 
 	// Check if any group ACL entry grants the permission
 	const matchingAcl = await prisma.aclEntry.findFirst({
 		where: {
 			resourceType,
 			permissions: { has: requiredPermission },
-			OR: [
-				{ accountId: userId },
-				{ groupId: { in: groupIds } }
-			],
-			...(resourceType === 'FILE' ? { fileId: resourceId } : { folderId: resourceId })
+			OR: [{ accountId: userId }, { groupId: { in: groupIds } }],
+			...(resourceType === 'FILE'
+				? { fileId: resourceId }
+				: { folderId: resourceId }),
 		},
 	});
 
 	return !!matchingAcl;
 };
 
-
 const checkPermission = (requiredPermission: Permissions) => {
 	return async (req: Request, res: Response, next: NextFunction) => {
-		const { resourceType, folderId, fileId } = req.body;
-		const resourceId = resourceType === 'FILE' ? fileId : folderId;
+		let resourceType: ResourceType | undefined;
+		// get resource type from query params
+		console.log(req.query.resourceType)
+		const resourceTypeFromQuery = req.query.resourceType as ResourceType;
+
+		if (resourceTypeFromQuery) {
+			resourceType = resourceTypeFromQuery;
+		}
+
+		if (!resourceType) {
+			return next(
+				new AppError({
+					message: 'Resource type is required',
+					statusCode: 400,
+				})
+			);
+		}
+
+		const resourceId = req.params.resourceId as string;
+
 		const user = req.user;
 
 		if (user.role === 'SUPER_ADMIN') {
@@ -60,26 +78,39 @@ const checkPermission = (requiredPermission: Permissions) => {
 		}
 
 		if (!resourceType || !resourceId) {
-			return next(new AppError({
-				message: 'Resource type and ID are required',
-				statusCode: 400,
-			}));
+			return next(
+				new AppError({
+					message: 'Resource type and ID are required',
+					statusCode: 400,
+				})
+			);
 		}
 
-		const hasAccess = await hasPermission(user.userId, resourceType, resourceId, requiredPermission);
+		const hasAccess = await hasPermission(
+			user.userId,
+			resourceType,
+			resourceId,
+			requiredPermission
+		);
 
 		if (!hasAccess) {
-			return next(new AppError({
-				message: `You do not have ${requiredPermission} access to this ${resourceType.toLowerCase()}`,
-				statusCode: 403,
-			}));
+			return next(
+				new AppError({
+					message: `You do not have ${requiredPermission} access to this ${resourceType.toLowerCase()}`,
+					statusCode: 403,
+				})
+			);
 		}
 
 		return next();
 	};
 };
 
-const checkAclEntryResources = async (req: Request, _: Response, next: NextFunction) => {
+const checkAclEntryResources = async (
+	req: Request,
+	_: Response,
+	next: NextFunction
+) => {
 	try {
 		const { resourceType, folderId, fileId } = req.body;
 
@@ -92,7 +123,7 @@ const checkAclEntryResources = async (req: Request, _: Response, next: NextFunct
 		if (resourceType === ResourceType.FOLDER && folderId) {
 			const folder = await prisma.folder.findUnique({
 				where: { id: folderId },
-				select: { id: true, accountId: true }
+				select: { id: true, accountId: true },
 			});
 
 			if (!folder) {
@@ -116,7 +147,7 @@ const checkAclEntryResources = async (req: Request, _: Response, next: NextFunct
 		} else if (resourceType === ResourceType.FILE && fileId) {
 			const file = await prisma.file.findUnique({
 				where: { id: fileId },
-				select: { id: true, accountId: true }
+				select: { id: true, accountId: true },
 			});
 
 			if (!file) {
@@ -132,7 +163,8 @@ const checkAclEntryResources = async (req: Request, _: Response, next: NextFunct
 			if (req.user.role !== 'ADMIN' && file.accountId !== req.user.userId) {
 				return next(
 					new AppError({
-						message: 'You do not have permission to manage access for this file',
+						message:
+							'You do not have permission to manage access for this file',
 						statusCode: 403,
 					})
 				);
