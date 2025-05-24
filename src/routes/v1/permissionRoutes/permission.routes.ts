@@ -16,9 +16,45 @@ router.get(
     catchAsync(permissionController.getAllPermission)
 );
 
-// Create a new permission on group or member
+// Create a new permission on group for folder (single folder - for backward compatibility)
 router.post(
-    "/", 
+    "/group/folder", 
+    Authenticate, 
+    checkRolePermission(SUPER_AND_ADMIN),
+    checkAclEntryResources,
+    catchAsync(permissionController.createPermission)
+);
+
+// create a new permission on group for file
+router.post(
+    "/group/file", 
+    Authenticate, 
+    checkRolePermission(SUPER_AND_ADMIN),
+    checkAclEntryResources,
+    catchAsync(permissionController.createPermission)
+);
+
+// Create a new permission on group for files array
+router.post(
+    "/group/files", 
+    Authenticate, 
+    checkRolePermission(SUPER_AND_ADMIN),
+    checkAclEntryResources,
+    catchAsync(permissionController.createPermission)
+);
+
+// create a new permission on user for folder
+router.post(
+    "/user/folder", 
+    Authenticate, 
+    checkRolePermission(SUPER_AND_ADMIN),
+    checkAclEntryResources,
+    catchAsync(permissionController.createPermission)
+);
+
+// create a new permission on user for file
+router.post(
+    "/user/file", 
     Authenticate, 
     checkRolePermission(SUPER_AND_ADMIN),
     checkAclEntryResources,

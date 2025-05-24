@@ -28,7 +28,9 @@ class PermissionController{
 				resourceType,
 				permissions,
 				folderId,
+				folderIds,
 				fileId,
+				fileIds,
 				accountId,
 				groupId,
 				inherited = false 
@@ -42,18 +44,18 @@ class PermissionController{
 				});
 			}
 
-			// Validate that either folderId or fileId is provided based on resourceType
-			if (resourceType === ResourceType.FOLDER && !folderId) {
+			// Validate that either folderId/folderIds or fileId is provided based on resourceType
+			if (resourceType === ResourceType.FOLDER && !folderId && (!folderIds || !Array.isArray(folderIds) || folderIds.length === 0)) {
 				return res.status(400).json({
 					status: 'error',
-					message: "Folder ID is required for folder permissions"
+					message: "Folder ID or array of Folder IDs is required for folder permissions"
 				});
 			}
 
-			if (resourceType === ResourceType.FILE && !fileId) {
+			if (resourceType === ResourceType.FILE && !fileId && (!fileIds || !Array.isArray(fileIds) || fileIds.length === 0)) {
 				return res.status(400).json({
 					status: 'error',
-					message: "File ID is required for file permissions"
+					message: "File ID or array of File IDs is required for file permissions"
 				});
 			}
 
@@ -65,7 +67,63 @@ class PermissionController{
 				});
 			}
 
-			// Create permission data
+			// Handle array of folderIds
+			if (resourceType === ResourceType.FOLDER && folderIds && Array.isArray(folderIds)) {
+				const createdPermissions = [];
+
+				// Create a permission for each folderId
+				for (const id of folderIds) {
+					console.log(id)
+					const permissionData = {
+						resourceType: resourceType as ResourceType,
+						permissions: permissions as Permissions[],
+						inherited,
+						folderId: id,
+						accountId,
+						groupId
+					};
+
+					const permission = await permissionService.createPermission(permissionData);
+					createdPermissions.push(permission);
+				}
+
+				return res.status(201).json({
+					status: 'success',
+					data: {
+						permissions: createdPermissions
+					}
+				});
+			}
+
+			// Handle array of fileIds
+			if (resourceType === ResourceType.FILE && fileIds && Array.isArray(fileIds)) {
+				const createdPermissions = [];
+
+				// Create a permission for each fileId
+				for (const id of fileIds) {
+					console.log(id)
+					const permissionData = {
+						resourceType: resourceType as ResourceType,
+						permissions: permissions as Permissions[],
+						inherited,
+						fileId: id,
+						accountId,
+						groupId
+					};
+
+					const permission = await permissionService.createPermission(permissionData);
+					createdPermissions.push(permission);
+				}
+
+				return res.status(201).json({
+					status: 'success',
+					data: {
+						permissions: createdPermissions
+					}
+				});
+			}
+
+			// Handle single folderId or fileId (backward compatibility)
 			const permissionData = {
 				resourceType: resourceType as ResourceType,
 				permissions: permissions as Permissions[],

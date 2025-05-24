@@ -112,7 +112,7 @@ const checkAclEntryResources = async (
 	next: NextFunction
 ) => {
 	try {
-		const { resourceType, folderId, fileId } = req.body;
+		const { resourceType, folderId, folderIds, fileId, fileIds } = req.body;
 
 		// Skip check for super admins
 		if (req.user.role === 'SUPER_ADMIN') {
@@ -120,19 +120,40 @@ const checkAclEntryResources = async (
 		}
 
 		// Check if the resource exists based on resourceType
-		if (resourceType === ResourceType.FOLDER && folderId) {
-			const folder = await prisma.folder.findUnique({
-				where: { id: folderId },
-				select: { id: true, accountId: true },
-			});
+		if (resourceType === ResourceType.FOLDER) {
+			// Handle array of folderIds
+			if (folderIds && Array.isArray(folderIds)) {
+				for (const id of folderIds) {
+					const folder = await prisma.folder.findUnique({
+						where: { id },
+						select: { id: true, accountId: true },
+					});
 
-			if (!folder) {
-				return next(
-					new AppError({
-						message: 'Folder not found',
-						statusCode: 404,
-					})
-				);
+					if (!folder) {
+						return next(
+							new AppError({
+								message: `Folder with ID ${id} not found`,
+								statusCode: 404,
+							})
+						);
+					}
+				}
+			} 
+			// Handle single folderId for backward compatibility
+			else if (folderId) {
+				const folder = await prisma.folder.findUnique({
+					where: { id: folderId },
+					select: { id: true, accountId: true },
+				});
+
+				if (!folder) {
+					return next(
+						new AppError({
+							message: 'Folder not found',
+							statusCode: 404,
+						})
+					);
+				}
 			}
 
 			// Check if a user is the owner or an admin
@@ -144,30 +165,62 @@ const checkAclEntryResources = async (
 			// 		})
 			// 	);
 			// }
-		} else if (resourceType === ResourceType.FILE && fileId) {
-			const file = await prisma.file.findUnique({
-				where: { id: fileId },
-				select: { id: true, accountId: true },
-			});
+		} else if (resourceType === ResourceType.FILE) {
+			// Handle array of fileIds
+			if (fileIds && Array.isArray(fileIds)) {
+				for (const id of fileIds) {
+					const file = await prisma.file.findUnique({
+						where: { id },
+						select: { id: true, accountId: true },
+					});
 
-			if (!file) {
-				return next(
-					new AppError({
-						message: 'File not found',
-						statusCode: 404,
-					})
-				);
+					if (!file) {
+						return next(
+							new AppError({
+								message: `File with ID ${id} not found`,
+								statusCode: 404,
+							})
+						);
+					}
+
+					// Check if user is the owner or an admin
+					if (req.user.role !== 'ADMIN' && file.accountId !== req.user.userId) {
+						return next(
+							new AppError({
+								message:
+									'You do not have permission to manage access for this file',
+								statusCode: 403,
+							})
+						);
+					}
+				}
 			}
+			// Handle single fileId for backward compatibility
+			else if (fileId) {
+				const file = await prisma.file.findUnique({
+					where: { id: fileId },
+					select: { id: true, accountId: true },
+				});
 
-			// Check if user is the owner or an admin
-			if (req.user.role !== 'ADMIN' && file.accountId !== req.user.userId) {
-				return next(
-					new AppError({
-						message:
-							'You do not have permission to manage access for this file',
-						statusCode: 403,
-					})
-				);
+				if (!file) {
+					return next(
+						new AppError({
+							message: 'File not found',
+							statusCode: 404,
+						})
+					);
+				}
+
+				// Check if user is the owner or an admin
+				if (req.user.role !== 'ADMIN' && file.accountId !== req.user.userId) {
+					return next(
+						new AppError({
+							message:
+								'You do not have permission to manage access for this file',
+							statusCode: 403,
+						})
+					);
+				}
 			}
 		} else {
 			return next(
