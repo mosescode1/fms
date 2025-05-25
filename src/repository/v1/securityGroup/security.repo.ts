@@ -104,6 +104,9 @@ class SecurityGroupRepo {
 				where:{
 					accountId: userId ? userId : "",
 					groupId: securityGroupId ? securityGroupId : "",
+				},
+				include: {
+					account: true,
 				}
 			});
 		}catch (e:any) {

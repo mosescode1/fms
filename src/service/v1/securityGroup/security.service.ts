@@ -32,7 +32,7 @@ class SecurityGroupService {
 		return await securityGroupRepo.editSecurityGroup(id, data);
 	}
 
-	// add a user to a security group
+	// add users to a security group
 	async addUsersToSecurityGroups(data:any) {
 		// check if a security group exists
 		const securityGroup = await securityGroupRepo.getSecurityGroupById(data.securityGroupId);
@@ -40,23 +40,50 @@ class SecurityGroupService {
 		if (!securityGroup) {
 			throw new AppError({ message: 'Security group not found', statusCode: 404 });
 		}
-		// if yes, check if a user exists
 
-		const user = await userRepo.findUserById(data.userId);
-		// if not, throw error
-		if (!user) {
-			throw new AppError({ message: 'User not found', statusCode: 404 });
+		// Process array of user IDs
+		const results = [];
+		const errors = [];
+
+		// Validate that userIds is an array
+		if (!Array.isArray(data.userIds)) {
+			throw new AppError({ message: 'User IDs must be an array', statusCode: 400 });
 		}
 
-		// if yes, check if a user is already in the group
-		const userInGroup = await securityGroupRepo.getUserInGroup(data.userId, data.securityGroupId);
+		// Process each user ID
+		for (const userId of data.userIds) {
+			try {
+				// Check if user exists
+				const user = await userRepo.findUserById(userId);
+				if (!user) {
+					errors.push({ userId, message: 'User not found', statusCode: 404 });
+					continue;
+				}
 
-		if (userInGroup) {
-			throw new AppError({ message: 'User already in group', statusCode: 409 });
+				// Check if user is already in the group
+				const userInGroup = await securityGroupRepo.getUserInGroup(userId, data.securityGroupId);
+				if (userInGroup) {
+					errors.push({ name: userInGroup.account.fullName, message: 'User already in group', statusCode: 409 });
+					continue;
+				}
+
+				// Add user to the group
+				const result = await securityGroupRepo.addUsersTosecurityGroups({
+					userId,
+					securityGroupId: data.securityGroupId
+				});
+				results.push(result);
+			} catch (error:any) {
+				errors.push({ userId, message: error.message, statusCode: 500 });
+			}
 		}
 
-		// if not, add a user to the group
-		return await securityGroupRepo.addUsersTosecurityGroups(data);
+		return {
+			results,
+			errors,
+			success: results.length,
+			failed: errors.length
+		};
 	}
 
 

@@ -82,7 +82,6 @@ class PermissionController{
 						accountId,
 						groupId
 					};
-
 					const permission = await permissionService.createPermission(permissionData);
 					createdPermissions.push(permission);
 				}

@@ -96,10 +96,10 @@ class fileService {
 				throw new AppError({ message: "File already exists", statusCode: 409 });
 			}
 
-			// check the file name already exists
-			if (await fileRepo.getFileByName(fileData.name)) {
-				throw new AppError({ message: "File name already exists", statusCode: 409 });
-			}
+			// // check the file name already exists
+			// if (await fileRepo.getFileByName(fileData.name)) {
+			// 	throw new AppError({ message: "File name already exists", statusCode: 409 });
+			// }
 
 			// Upload file to Google Drive
 			const data = await googleDriveRepo.uploadFile(fileData);

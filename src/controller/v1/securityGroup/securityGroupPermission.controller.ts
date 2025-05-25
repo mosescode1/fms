@@ -157,16 +157,16 @@ class SecurityGroupPermissionController {
             })
         }
 
-        const { userId } = req.body;
+        const { userIds } = req.body;
         const { groupId } = req.params;
 
         // Validate required fields
-        if (!userId || !groupId) {
+        if (userIds.length < 0 || !groupId) {
             throw new AppError({ message: 'User ID and Group ID are required', statusCode: 400 });
         }
 
         const data = {
-            userId,
+            userIds,
             securityGroupId: groupId
         }
         // Add a user to the security group

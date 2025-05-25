@@ -16,7 +16,7 @@ router.get(
     catchAsync(permissionController.getAllPermission)
 );
 
-// Create a new permission on group for folder (single folder - for backward compatibility)
+// Create a new permission on a group for folder (single folder - for backward compatibility)
 router.post(
     "/group/folder", 
     Authenticate, 
@@ -25,7 +25,7 @@ router.post(
     catchAsync(permissionController.createPermission)
 );
 
-// create a new permission on group for file
+// create a new permission on a group for file
 router.post(
     "/group/file", 
     Authenticate, 
