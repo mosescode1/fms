@@ -24,7 +24,6 @@ export const hasPermission = async (
 	resourceId: string,
 	requiredPermission: Permissions
 ): Promise<boolean> => {
-	// check if the user has the permission if not check the group
 
 	// Get user's group IDs
 	const groupMemberships = await prisma.groupMember.findMany({

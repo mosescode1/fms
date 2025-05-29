@@ -160,8 +160,14 @@ class SecurityGroupPermissionController {
         const { userIds } = req.body;
         const { groupId } = req.params;
 
+        if (!userIds || !groupId){
+            return res.status(400).json({
+                status: 'fail',
+                message: 'Missing userIds or groupId from the parameter'
+            })
+        }
         // Validate required fields
-        if (userIds.length < 0 || !groupId) {
+        if (userIds.length < 0) {
             throw new AppError({ message: 'User ID and Group ID are required', statusCode: 400 });
         }
 

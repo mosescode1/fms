@@ -30,7 +30,7 @@ router.get(
 	'{/:fileId}',
 	Authenticate,
 	checkRolePermission(roles.ALL),
-	checkPermission(Permissions.MANAGE_PERMISSIONS),
+	checkPermission(Permissions.OPEN_FILE),
 	catchAsync(fileController.getFileById)
 );
 
@@ -38,14 +38,14 @@ router.post(
 	'/create/folder{/:parentId}',
 	Authenticate,
 	checkRolePermission(roles.ALL),
-	checkPermission(Permissions.MANAGE_PERMISSIONS),
+	checkPermission(Permissions.CREATE_FOLDER),
 	catchAsync(fileController.createFolder)
 );
 router.get(
 	'/folders{/:resourceId}',
 	Authenticate,
 	checkRolePermission(roles.ALL),
-	checkPermission(Permissions.MANAGE_PERMISSIONS),
+	checkPermission(Permissions.OPEN_FOLDER),
 	catchAsync(fileController.getFolderById)
 );
 
@@ -55,7 +55,7 @@ router.post(
 	Authenticate,
 	upload.single('file'),
 	checkRolePermission(roles.ALL),
-	checkPermission(Permissions.MANAGE_PERMISSIONS),
+	checkPermission(Permissions.EXECUTE),
 	catchAsync(fileController.uploadFile)
 );
 
