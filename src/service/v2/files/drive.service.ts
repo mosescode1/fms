@@ -88,7 +88,6 @@ class fileService {
 				remotePath = this.rootPath;
 			}
 
-			console.log(remotePath, "remotePath" );
 			fileData.remotePath = remotePath;
 
 			// Check if the file already exists
@@ -114,7 +113,6 @@ class fileService {
 
 			return newFile;
 		} catch (error: any) {
-			console.error("Error uploading file:", error);
 			throw new AppError({ message: error.message, statusCode: error.statusCode || 500 });
 		}
 	}
@@ -167,7 +165,6 @@ class fileService {
 				folderPath.map(path => fileRepo.getFolderByPath(path, true))
 			);
 		} catch (error: any) {
-			console.error("Error fetching folders by path", error);
 			throw new Error(error.message);
 		}
 	}
@@ -181,7 +178,138 @@ class fileService {
 
 			return result;
 		} catch (error: any) {
-			console.error("Error deleting folder", error);
+			throw new AppError({ message: error.message, statusCode: error.statusCode || 500 });
+		}
+	}
+
+ async uploadFolder(data: { 
+		files: Express.Multer.File[], 
+		folderStructure: Record<string, { path: string, name: string }>, 
+		parentId?: string, 
+		userId: string 
+	}) {
+		try {
+			const { files, folderStructure, parentId, userId } = data;
+
+			// Validate input data
+			if (!files || !Array.isArray(files)) {
+				throw new AppError({ message: "Files must be an array", statusCode: 400 });
+			}
+
+			if (!folderStructure || typeof folderStructure !== 'object') {
+				throw new AppError({ 
+					message: "Folder structure must be an object mapping file paths to their metadata", 
+					statusCode: 400 
+				});
+			}
+
+			// Create a map to store created folders by path
+			const folderMap = new Map<string, any>();
+			const createdFiles = [];
+			const uniqueFolderPaths = new Set<string>();
+
+			// Extract all unique folder paths from the structure
+			for (const originalPath in folderStructure) {
+				const pathInfo = folderStructure[originalPath];
+				if (pathInfo && pathInfo.path) {
+					// Normalize the path to ensure consistent format
+					const normalizedPath = pathInfo.path.startsWith('/') ? pathInfo.path : '/' + pathInfo.path;
+					uniqueFolderPaths.add(normalizedPath);
+				}
+			}
+
+			// Process all folder paths to create the folder hierarchy
+			for (const fullPath of uniqueFolderPaths) {
+				if (fullPath === '/' || fullPath === '') continue; // Skip root
+
+				const pathParts = fullPath.split('/').filter(part => part !== '');
+				let currentPath = '';
+				let currentParentId = parentId;
+
+				// Create each folder in the path if it doesn't exist
+				for (const part of pathParts) {
+					currentPath += '/' + part;
+
+					if (!folderMap.has(currentPath)) {
+						// Check if folder already exists at this path
+						let folder = await fileRepo.getFolderByPath(currentPath, true);
+
+						if (!folder) {
+							// Create the folder
+							const folderData = {
+								folderName: part,
+								parentId: currentParentId,
+								userId: userId,
+							};
+
+							try {
+								folder = await this.createFolder(folderData);
+							} catch (error: any) {
+								// If folder creation fails but it's because it already exists, try to fetch it
+								if (error.statusCode === 409) {
+									folder = await fileRepo.getFolderByPath(currentPath, true);
+									if (!folder) {
+										throw error; // Re-throw if we still can't find it
+									}
+								} else {
+									throw error; // Re-throw other errors
+								}
+							}
+						}
+
+						folderMap.set(currentPath, folder);
+						currentParentId = folder.id;
+					} else {
+						currentParentId = folderMap.get(currentPath).id;
+					}
+				}
+			}
+
+			// Now upload all files to their respective folders
+			for (const file of files) {
+				const originalPath = file.originalname;
+				const pathInfo = folderStructure[originalPath];
+
+
+				// Extract the actual filename and folder path
+				const fileName = pathInfo?.name || originalPath.split('/').pop() || originalPath;
+				const folderPath = pathInfo?.path || '';
+				const normalizedFolderPath = folderPath.startsWith('/') ? folderPath : '/' + folderPath;
+
+				// Get the folder ID for this path
+				let folderId = parentId;
+				if (normalizedFolderPath && normalizedFolderPath !== '/' && folderMap.has(normalizedFolderPath)) {
+					folderId = folderMap.get(normalizedFolderPath).id;
+				}
+
+				// Upload the file
+				try {
+					const fileData = {
+						name: fileName,
+						mimetype: file.mimetype,
+						size: file.size,
+						encoding: file.encoding,
+						folderId: folderId,
+						remotePath: normalizedFolderPath + '/' + fileName,
+						localSource: file.buffer,
+						userId: userId,
+					};
+
+					const uploadedFile = await this.uploadFile(fileData);
+					createdFiles.push(uploadedFile);
+				} catch (error: any) {
+					// Continue with other files even if one fails
+					if (error.statusCode !== 409) { // Ignore "already exists" errors
+						throw error;
+					}
+				}
+			}
+
+			return {
+				folders: Array.from(folderMap.values()),
+				files: createdFiles
+			};
+		} catch (error: any) {
 			throw new AppError({ message: error.message, statusCode: error.statusCode || 500 });
 		}
 	}

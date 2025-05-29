@@ -34,7 +34,7 @@ router.patch(
 
 // delete a security group
 router.delete(
-	'/:id',
+	'{/:groudId}',
 	Authenticate,
 	checkRolePermission(roles.SUPER_AND_ADMIN),
 	catchAsync(securityGroupPermissionController.deleteSecurityGroup)

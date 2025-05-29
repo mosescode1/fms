@@ -59,6 +59,15 @@ router.post(
 	catchAsync(fileController.uploadFile)
 );
 
+router.post(
+	'/upload/folder{/:resourceId}',
+	Authenticate,
+	upload.array('files'),
+	checkRolePermission(roles.ALL),
+	checkPermission(Permissions.EXECUTE),
+	catchAsync(fileController.uploadFolder)
+);
+
 // get all files and folder that a user has access to
 router.get(
 	'/access',

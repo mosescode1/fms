@@ -1,6 +1,6 @@
 import {Router} from "express"
 import {Authenticate} from '../../../middleware/authenticate';
-import permissionController from "../../../controller/v1/permmission/permission.controller"
+import permissionController from "../../../controller/v1/permission/permission.controller"
 import {catchAsync} from '../../../lib';
 import { checkRolePermission, checkAclEntryResources } from '../../../middleware/permission';
 import  roles  from '../../../types/roles.types';
@@ -71,7 +71,7 @@ router.get(
 
 // get users in the permission by id
 router.get(
-	"{/:permissionId}/users",
+	"{/:permissionId/}users",
 	Authenticate,
 	checkRolePermission(SUPER_AND_ADMIN),
 	catchAsync(permissionController.getPermissionUsers)

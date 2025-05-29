@@ -4,7 +4,6 @@ import { AppError } from "../../../lib";
 import { getPaginationParams, createPaginatedResponse } from "../../../lib/pagination";
 import trashService from '../../../service/v1/trash/trash.service';
 // import auditLogService from '../../../service/v1/auditLog/audit_log.service';
-import driveService from '../../../service/v2/files/drive.service';
 
 class FileController{
 
@@ -64,12 +63,77 @@ class FileController{
             userId: req.user.userId,
         };
 
-        const data = await driveService.uploadFile(fileData);
+        const data = await fileServiceInstance.uploadFile(fileData);
 
         res.status(200).json({
             message: 'File uploaded to remote server directly from memory',
             file: data
         });
+    }
+
+    async uploadFolder(req: Request, res: Response){
+        if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
+            return res.status(400).json({ error: 'No files uploaded' });
+        }
+
+        if (!req.body.folderStructure) {
+            return res.status(400).json({ 
+                error: 'Folder structure information is required',
+                example: {
+                    "file1.txt": { "path": "/folder1", "name": "file1.txt" },
+                    "folder1/file2.txt": { "path": "/folder1", "name": "file2.txt" },
+                    "folder1/subfolder/file3.txt": { "path": "/folder1/subfolder", "name": "file3.txt" }
+                }
+            });
+        }
+
+        let folderStructure;
+        try {
+            folderStructure = JSON.parse(req.body.folderStructure);
+        } catch (error) {
+            return res.status(400).json({ 
+                error: 'Invalid folder structure format. Must be a valid JSON string.',
+                example: {
+                    "file1.txt": { "path": "/folder1", "name": "file1.txt" },
+                    "folder1/file2.txt": { "path": "/folder1", "name": "file2.txt" },
+                    "folder1/subfolder/file3.txt": { "path": "/folder1/subfolder", "name": "file3.txt" }
+                }
+            });
+        }
+
+        // Validate folder structure format
+        if (typeof folderStructure !== 'object') {
+            return res.status(400).json({ 
+                error: 'Folder structure must be an object mapping file paths to their metadata',
+                example: {
+                    "file1.txt": { "path": "/folder1", "name": "file1.txt" },
+                    "folder1/file2.txt": { "path": "/folder1", "name": "file2.txt" },
+                    "folder1/subfolder/file3.txt": { "path": "/folder1/subfolder", "name": "file3.txt" }
+                }
+            });
+        }
+
+        const parentId = req.params.resourceId;
+        const userId = req.user.userId;
+
+        // Process the folder structure and files
+        try {
+            const result = await fileServiceInstance.uploadFolder({
+                files: req.files,
+                folderStructure,
+                parentId,
+                userId
+            });
+
+            res.status(200).json({
+                message: 'Folder uploaded successfully',
+                data: result
+            });
+        } catch (error: any) {
+            res.status(error.statusCode || 500).json({
+                error: error.message || 'Failed to upload folder'
+            });
+        }
     }
 
     async allFiles(req: Request, res: Response){

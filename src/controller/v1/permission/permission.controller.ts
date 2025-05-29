@@ -74,7 +74,6 @@ class PermissionController{
 
 				// Create a permission for each folderId
 				for (const id of folderIds) {
-					console.log(id)
 					const permissionData = {
 						resourceType: resourceType as ResourceType,
 						permissions: permissions as Permissions[],
@@ -101,7 +100,6 @@ class PermissionController{
 
 				// Create a permission for each fileId
 				for (const id of fileIds) {
-					console.log(id)
 					const permissionData = {
 						resourceType: resourceType as ResourceType,
 						permissions: permissions as Permissions[],
@@ -273,14 +271,12 @@ class PermissionController{
 				data: {
 					users
 				}
-			})
-
-		}catch (error: any) {
+			});
+		} catch (error: any) {
 			res.status(error.statusCode || 500).json({
 				status: 'error',
 				message: error.message
-				}
-			)
+			});
 		}
 	}
 }
