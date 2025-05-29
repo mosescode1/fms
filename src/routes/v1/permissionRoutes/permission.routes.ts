@@ -69,6 +69,14 @@ router.get(
     catchAsync(permissionController.getPermissionById)
 );
 
+// get users in the permission by id
+router.get(
+	"{/:permissionId}/users",
+	Authenticate,
+	checkRolePermission(SUPER_AND_ADMIN),
+	catchAsync(permissionController.getPermissionUsers)
+);
+
 // Get user permissions
 router.get(
     "/user{/:userId}",
@@ -84,6 +92,7 @@ router.get(
     checkRolePermission(SUPER_AND_ADMIN),
     catchAsync(permissionController.getGroupPermissions)
 );
+
 
 // Delete permission
 router.delete(

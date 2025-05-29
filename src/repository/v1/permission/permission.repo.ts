@@ -145,6 +145,21 @@ class PermissionRepo{
 			throw new Error(error.message);
 		}
 	}
+
+	async getPermissionUsers(permissionId: string ) {
+		try{
+			return await prisma.aclEntry.findMany({
+				where:{
+					id: permissionId
+				},
+				include:{
+					account: true
+				}
+			})
+		}catch (error:any){
+			throw new Error(error.message);
+		}
+	}
 }
 
 const permissionRepo = new PermissionRepo()

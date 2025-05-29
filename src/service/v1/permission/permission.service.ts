@@ -169,6 +169,24 @@ class PermissionService{
 			}
 		}
 	}
+
+	async getAllPermissionUsers(permissionId: string) {
+		try{
+			const permission = await permissionRepo.getPermissionById(permissionId);
+			if (!permission) {
+				throw new AppError({message: "Permission not found", statusCode: 404});
+			}
+
+			// return all users
+			return await permissionRepo.getPermissionUsers(permissionId)
+		}catch (error:any){
+			if (error instanceof AppError) {
+				throw error;
+			} else {
+				throw new AppError({message: error.message, statusCode: 500});
+			}
+		}
+	}
 }
 
 

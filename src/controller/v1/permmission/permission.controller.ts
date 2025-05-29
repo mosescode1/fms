@@ -1,6 +1,7 @@
 import {Response, Request} from 'express';
 import permissionService from '../../../service/v1/permission/permission.service';
 import { Permissions, ResourceType } from '@prisma/client';
+import userService from '../../../service/v1/user/user.service';
 
 class PermissionController{
 
@@ -253,6 +254,33 @@ class PermissionController{
 				status: 'error',
 				message: error.message
 			});
+		}
+	}
+
+	getPermissionUsers = async (req:Request, res:Response) => {
+		try {
+			const { permissionId } = req.params;
+			if (!permissionId) {
+				return res.status(400).json({
+					status: 'error',
+					message: "Permission ID is required"
+				});
+			}
+			const users = permissionService.getAllPermissionUsers(permissionId);
+
+			res.status(200).json({
+				status: 'success',
+				data: {
+					users
+				}
+			})
+
+		}catch (error: any) {
+			res.status(error.statusCode || 500).json({
+				status: 'error',
+				message: error.message
+				}
+			)
 		}
 	}
 }
