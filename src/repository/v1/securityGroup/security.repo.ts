@@ -113,6 +113,22 @@ class SecurityGroupRepo {
 			throw new Error(e.message);
 		}
 	}
+
+	// get all users in a security group
+	async getUsersInGroup(securityGroupId: string) {
+		try {
+			return await prisma.groupMember.findMany({
+				where: {
+					groupId: securityGroupId,
+				},
+				include: {
+					account: true,
+				}
+			});
+		} catch (error: any) {
+			throw new Error(error.message);
+		}
+	}
 }
 
 const securityGroupRepo = new SecurityGroupRepo();

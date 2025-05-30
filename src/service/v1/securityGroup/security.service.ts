@@ -96,6 +96,17 @@ class SecurityGroupService {
 		// if yes, delete a security group
 		return await securityGroupRepo.deleteSecurityGroup(groupId);
 	}
+
+	// get users in a security group
+	async getUsersInGroup(groupId: string) {
+		// check if a security group exists
+		const securityGroup = await securityGroupRepo.getSecurityGroupById(groupId);
+		if (!securityGroup) {
+			throw new AppError({ message: 'Security group not found', statusCode: 404 });
+		}
+		// if yes, get users in the security group
+		return await securityGroupRepo.getUsersInGroup(groupId);
+	}
 }
 
 const securityGroupService = new SecurityGroupService();

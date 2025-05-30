@@ -267,6 +267,24 @@ class SecurityGroupPermissionController {
             }
         });
     }
+
+    async getUsersInGroup (req:Request, res:Response, next: NextFunction): Promise<any> {
+        const {groupId} = req.params;
+        if (!groupId){
+            return res.status(400).json({
+                status: 'fail',
+                message: 'Missing groupId from the parameter'
+            })
+        }
+        const users = await securityService.getUsersInGroup(groupId);
+
+        res.status(200).json({
+            status: 'success',
+            data: {
+                users
+            }
+        });
+    }
 }
 
 const securityGroupPermissionController = new SecurityGroupPermissionController();

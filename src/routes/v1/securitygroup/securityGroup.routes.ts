@@ -4,6 +4,7 @@ import { Authenticate } from '../../../middleware/authenticate';
 import { checkRolePermission } from '../../../middleware/permission';
 import { catchAsync } from '../../../lib';
 import securityGroupPermissionController from '../../../controller/v1/securityGroup/securityGroupPermission.controller';
+import securityService from '../../../service/v1/securityGroup/security.service';
 import roles from '../../../types/roles.types';
 
 const router = Router();
@@ -34,7 +35,7 @@ router.patch(
 
 // delete a security group
 router.delete(
-	'{/:groudId}',
+	'{/:groupId}',
 	Authenticate,
 	checkRolePermission(roles.SUPER_AND_ADMIN),
 	catchAsync(securityGroupPermissionController.deleteSecurityGroup)
@@ -47,6 +48,13 @@ router.post(
 	checkRolePermission(roles.SUPER_AND_ADMIN),
 	catchAsync(securityGroupPermissionController.addUserToGroup)
 );
+
+// get users in a security group
+router.get(
+	'{/:groupId/}users',
+	Authenticate,
+	checkRolePermission(roles.SUPER_AND_ADMIN),
+	catchAsync(securityGroupPermissionController.getUsersInGroup));
 
 
 export default router;
