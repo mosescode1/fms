@@ -16,6 +16,12 @@ router.get(
     catchAsync(permissionController.getAllPermission)
 );
 
+router.post("/member",
+	Authenticate,
+	checkRolePermission(SUPER_AND_ADMIN),
+	checkAclEntryResources,
+	catchAsync(permissionController.createMemberPermission))
+
 // Create a new permission on a group for folder (single folder - for backward compatibility)
 router.post(
     "/group/folder", 

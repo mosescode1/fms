@@ -5,6 +5,66 @@ import userService from '../../../service/v1/user/user.service';
 
 class PermissionController{
 
+	createMemberPermission = async (req:Request, res:Response) => {
+		try {
+			const {
+				resourceType,
+				permissions,
+				folderId,
+				accountId,
+				inherited = false 
+			} = req.body;
+
+			// Validate required fields
+			if (!resourceType || !permissions || permissions.length === 0) {
+				return res.status(400).json({
+					status: 'error',
+					message: "Resource type and permissions are required"
+				});
+			}
+
+			// Validate that folderId is provided for folder permissions
+			if (resourceType === ResourceType.FOLDER && !folderId) {
+				return res.status(400).json({
+					status: 'error',
+					message: "Folder ID is required for folder permissions"
+				});
+			}
+
+			// Validate that accountId is provided
+			if (!accountId) {
+				return res.status(400).json({
+					status: 'error',
+					message: "Account ID is required for member permissions"
+				});
+			}
+
+			// Create permission data object
+			const permissionData = {
+				resourceType: resourceType as ResourceType,
+				permissions: permissions as Permissions[],
+				inherited,
+				folderId,
+				accountId
+			};
+
+			// Create the permission
+			const permission = await permissionService.createPermission(permissionData);
+
+			res.status(201).json({
+				status: 'success',
+				data: {
+					permission
+				}
+			});
+		} catch (error: any) {
+			res.status(error.statusCode || 500).json({
+				status: 'error',
+				message: error.message
+			});
+		}
+	}
+
 	getAllPermission = async (req:Request, res:Response) =>{
 		try {
 			const permissions = await permissionService.getAllPermission();
