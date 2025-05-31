@@ -5,6 +5,7 @@ import Readable from "stream"
 import {FolderData} from '../../../types/trash.types';
 import googleDriveRepo from '../../../repository/v2/google-drive/google.drive.repo';
 import cacheService from '../../../lib/cache';
+import auditLogService from '../../../service/v1/auditLog/audit_log.service';
 
 type FileData = {
 	name: string;
@@ -67,6 +68,15 @@ class fileService {
 			folderData["id"] = resp.data.id;
 			const newFolder = await fileRepo.createFolder(folderData);
 
+			// Create audit log
+			await auditLogService.createAuditLog({
+				action: "CREATE",
+				targetId: newFolder.id,
+				actorId: folderData.userId,
+				targetType: "FOLDER",
+				folderId: newFolder.id
+			});
+
 			return newFolder;
 		} catch (error: any) {
 			throw new AppError({ message: error.message, statusCode: error.statusCode || 500 });
@@ -110,6 +120,16 @@ class fileService {
 
 			// Save to database
 			const newFile = await fileRepo.uploadFile(fileData);
+
+			// Create audit log
+			await auditLogService.createAuditLog({
+				action: "UPLOAD",
+				targetId: newFile.id,
+				actorId: fileData.userId,
+				targetType: "FILE",
+				fileId: newFile.id,
+				folderId: fileData.folderId || null
+			});
 
 			return newFile;
 		} catch (error: any) {
@@ -175,6 +195,15 @@ class fileService {
 
 			// Invalidate folder cache
 			cacheService.delete(`folder:${folderData.folderId}`);
+
+			// Create audit log
+			await auditLogService.createAuditLog({
+				action: "DELETE",
+				targetId: folderData.folderId ? folderData.folderId : "",
+				actorId: folderData.accountId,
+				targetType: "FOLDER",
+				folderId: folderData.folderId
+			});
 
 			return result;
 		} catch (error: any) {
@@ -302,6 +331,23 @@ class fileService {
 					if (error.statusCode !== 409) { // Ignore "already exists" errors
 						throw error;
 					}
+				}
+			}
+
+			// Create an audit log for the overall folder upload operation
+			if (folderMap.size > 0) {
+				// Get the root folder of the upload
+				const rootFolders = Array.from(folderMap.values())
+					.filter(folder => folder.parentId === parentId);
+
+				if (rootFolders.length > 0) {
+					await auditLogService.createAuditLog({
+						action: "UPLOAD_FOLDER",
+						targetId: rootFolders[0].id,
+						actorId: userId,
+						targetType: "FOLDER",
+						folderId: rootFolders[0].id
+					});
 				}
 			}
 
