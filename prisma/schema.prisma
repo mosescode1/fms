@@ -146,6 +146,7 @@ model AuditLog {
 enum Action {
   CREATE
   READ
+  UPLOAD
   UPDATE
   DELETE
   RESTORE
