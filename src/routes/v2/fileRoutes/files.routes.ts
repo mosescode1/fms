@@ -1,6 +1,7 @@
 import Router from 'express';
 import { Authenticate } from '../../../middleware/authenticate';
 import fileController from '../../../controller/v2/file/file.controller';
+import trashController from '../../../controller/v1/trash/trash.controller';
 import { upload } from '../../../middleware/upload';
 import { catchAsync } from '../../../lib';
 import roles from '../../../types/roles.types';
@@ -77,11 +78,11 @@ router.get(
 );
 
 // Mark as deletion
-// router.delete("/folders{/:folderId}", Authenticate, checkRolePermission(adminAndUser), checkPermissionLevel, checkWriteAccess,catchAsync(fileController.userDeleteFolder));
-// router.delete("/file{/:fileId}", Authenticate, checkRolePermission(adminAndUser), checkPermissionLevel, checkWriteAccess,catchAsync(fileController.userDeleteFile));
+router.delete("/folders{/:folderId}", Authenticate, checkRolePermission(roles.ALL), checkPermission(Permissions.EXECUTE), catchAsync(fileController.userDeleteFolder));
+router.delete("/file{/:fileId}", Authenticate, checkRolePermission(roles.ALL), checkPermission(Permissions.EXECUTE), catchAsync(fileController.userDeleteFolder));
 
 // Permanent deletion and restoration of file
-// router.get("/file/restore{/:fileId}", Authenticate, checkRolePermission(adminOnly),  catchAsync(fileController.userRestoreFile));
-// router.delete("/file/delete{/:fileId}", Authenticate, checkRolePermission(adminOnly),  catchAsync(fileController.userDeleteFile));
+router.get("/file/restore{/:fileId}", Authenticate, checkRolePermission(roles.SUPER_AND_ADMIN), catchAsync(trashController.restoreTrashItem));
+router.delete("/file/delete{/:fileId}", Authenticate, checkRolePermission(roles.SUPER_AND_ADMIN), catchAsync(trashController.permanentlyDeleteItem));
 
 export default router;
