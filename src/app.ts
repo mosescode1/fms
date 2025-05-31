@@ -13,8 +13,8 @@ import securityRoutes from './routes/v1/securitygroup/securityGroup.routes';
 // import organizationRoutes from "./routes/v1/organizationRoutes/organization.routes";
 // import filesRoutes from "./routes/v1/filesRoutes/files.routes";
 import permissionRoutes from "./routes/v1/permissionRoutes/permission.routes"
-// import auditLogRoutes from "./routes/v1/auditLog/audit.log";
-// import trashRoutes from './routes/v1/trashRoutes/trash.routes';
+import auditLogRoutes from "./routes/v1/auditLog/audit.log";
+import trashRoutes from './routes/v1/trashRoutes/trash.routes';
 // v2
 import fileRoutesV2 from "./routes/v2/fileRoutes/files.routes";
 
@@ -51,9 +51,9 @@ app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/security-group', securityRoutes);
 app.use("/api/v1/permissions", permissionRoutes)
-// app.use("/api/v1/trash", trashRoutes)
+app.use("/api/v1/trash", trashRoutes)
 // app.use("/api/v1/files", filesRoutes)
-// app.use("/api/v1/auditlog",auditLogRoutes)
+app.use("/api/v1/auditlog",auditLogRoutes)
 // VERSION 2
 app.use("/api/v2/files", fileRoutesV2);
 
