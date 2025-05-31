@@ -44,15 +44,15 @@ class PermissionService{
 				}
 
 				// check if the folder already has permission
-				if (!permissionData.accountId) {
-					const existingPermission = await permissionRepo.getGroupPermissionByFolderId(
-						permissionData.groupId,
-						permissionData.folderId
-					);
-					if (existingPermission.length > 0) {
-						throw new AppError({message: "Permission already set for this group on this folder", statusCode: 400});
-					}
-				}
+				// if (!permissionData.accountId) {
+				// 	const existingPermission = await permissionRepo.getGroupPermissionByFolderId(
+				// 		permissionData.groupId,
+				// 		permissionData.folderId
+				// 	);
+				// 	if (existingPermission.length > 0) {
+				// 		throw new AppError({message: "Permission already set for this group on this folder", statusCode: 400});
+				// 	}
+				// }
 
 				// Check if the user already has permission on this folder
 				if (permissionData.accountId) {
