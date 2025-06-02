@@ -3,6 +3,7 @@ import fileServiceInstance from "../../../service/v2/files/drive.service";
 import { AppError } from "../../../lib";
 import { getPaginationParams, createPaginatedResponse } from "../../../lib/pagination";
 import trashService from '../../../service/v1/trash/trash.service';
+import auditLogService from '../../../service/v1/auditLog/audit_log.service';
 // import auditLogService from '../../../service/v1/auditLog/audit_log.service';
 
 class FileController{
@@ -225,7 +226,7 @@ class FileController{
             targetType: "FOLDER",
             folderId: folder.id,
         }
-        // await auditLogService.createAuditLog(auditLogData);
+        await auditLogService.createAuditLog(auditLogData);
 
         res.status(200).json({
             status: "success",
@@ -264,6 +265,46 @@ class FileController{
             data: {
                 file
             }
+        });
+    }
+
+    async userDeleteFile(req: Request, res: Response) {
+        const filePath = req.params.filePath;
+        const accountId = req.user.userId;
+        const fileId = req.params.fileId;
+
+        // check if the file exists
+        const existingFile = await fileServiceInstance.getFileById(fileId);
+        if (!existingFile) {
+            throw new AppError({ message: 'File not found', statusCode: 404 });
+        }
+
+        const fileData = {
+            filePath,
+            accountId,
+            fileId,
+            originalPath: existingFile.filePath,
+        }
+
+        // mark as delete in the database and not fully delete it
+        const file = await fileServiceInstance.userDeleteFile(fileData);
+
+        // add it to the trash folder
+        await trashService.createTrashFile(fileData);
+
+        // add it to the audit log
+        const auditLogData = {
+            action: "DELETE",
+            targetId: file.id,
+            actorId: accountId,
+            targetType: "FILE",
+            fileId: file.id,
+        }
+        await auditLogService.createAuditLog(auditLogData);
+
+        res.status(200).json({
+            status: "success",
+            message: "File deleted successfully"
         });
     }
 }

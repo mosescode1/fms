@@ -195,7 +195,8 @@ class fileRepository {
             const [files, total] = await Promise.all([
                 prisma.file.findMany({
                     where: {
-                        deleted: false
+                        deleted: false,
+                        folderId: null
                     },
                     orderBy: {
                         uploadedAt: 'desc'
@@ -300,6 +301,17 @@ class fileRepository {
                 id: folderData.folderId,
             },
             data:{
+                deleted: true,
+            }
+        })
+    }
+
+    async updateDeletedFile(fileData: FolderData) {
+        return prisma.file.update({
+            where: {
+                id: fileData.fileId,
+            },
+            data: {
                 deleted: true,
             }
         })

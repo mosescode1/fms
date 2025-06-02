@@ -79,7 +79,7 @@ router.get(
 
 // Mark as deletion
 router.delete("/folders{/:folderId}", Authenticate, checkRolePermission(roles.ALL), checkPermission(Permissions.EXECUTE), catchAsync(fileController.userDeleteFolder));
-router.delete("/file{/:fileId}", Authenticate, checkRolePermission(roles.ALL), checkPermission(Permissions.EXECUTE), catchAsync(fileController.userDeleteFolder));
+router.delete("/file{/:fileId}", Authenticate, checkRolePermission(roles.ALL), checkPermission(Permissions.EXECUTE), catchAsync(fileController.userDeleteFile));
 
 // Permanent deletion and restoration of file
 router.get("/file/restore{/:fileId}", Authenticate, checkRolePermission(roles.SUPER_AND_ADMIN), catchAsync(trashController.restoreTrashItem));

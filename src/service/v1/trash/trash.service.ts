@@ -14,6 +14,15 @@ class TrashService{
 		}
 	}
 
+	async createTrashFile(fileData: FolderData) {
+		try{
+			return await trashRepo.createFileTrash(fileData);
+		}catch (error: any){
+			console.error("Error creating trash file", error);
+			throw new Error(error.message);
+		}
+	}
+
 	async getAllTrashedItems() {
 		try{
 			return await trashRepo.getAllTrashedItems()

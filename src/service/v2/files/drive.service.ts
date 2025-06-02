@@ -211,6 +211,28 @@ class fileService {
 		}
 	}
 
+	async userDeleteFile(fileData: FolderData) {
+		try {
+			const result = await fileRepo.updateDeletedFile(fileData);
+
+			// Invalidate file cache
+			cacheService.delete(`file:${fileData.fileId}`);
+
+			// Create audit log
+			await auditLogService.createAuditLog({
+				action: "DELETE",
+				targetId: fileData.fileId ? fileData.fileId : "",
+				actorId: fileData.accountId,
+				targetType: "FILE",
+				fileId: fileData.fileId
+			});
+
+			return result;
+		} catch (error: any) {
+			throw new AppError({ message: error.message, statusCode: error.statusCode || 500 });
+		}
+	}
+
  async uploadFolder(data: { 
 		files: Express.Multer.File[], 
 		folderStructure: Record<string, { path: string, name: string }>, 
