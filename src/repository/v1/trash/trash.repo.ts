@@ -26,7 +26,7 @@ class TrashRepo{
 				data: {
 					originalPath: fileData.filePath,
 					accountId: fileData.accountId,
-					folderId: fileData.fileId,
+					fileId: fileData.fileId,
 					itemType: "FILE"
 				}
 			});
