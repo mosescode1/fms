@@ -318,12 +318,36 @@ class fileService {
 
 			// Now upload all files to their respective folders
 			for (const file of files) {
-				const originalPath = file.originalname;
-				const pathInfo = folderStructure[originalPath];
+				// Find the matching entry in folderStructure by comparing file properties
+				let matchingPath = null;
+				let pathInfo = null;
 
+				// First try to find by originalname directly (simple case)
+				if (folderStructure[file.originalname]) {
+					matchingPath = file.originalname;
+					pathInfo = folderStructure[matchingPath];
+				} else {
+					// If not found, search through all entries to find a match
+					for (const path in folderStructure) {
+						const info = folderStructure[path];
+						// Check if the filename matches the last part of the path
+						const pathFileName = path.split('/').pop() || '';
+
+						if (info.name === file.originalname || pathFileName === file.originalname) {
+							matchingPath = path;
+							pathInfo = info;
+							break;
+						}
+					}
+				}
+
+				// If still no match found, use originalname as fallback
+				if (!pathInfo) {
+					console.warn(`No matching folder structure entry found for file: ${file.originalname}`);
+				}
 
 				// Extract the actual filename and folder path
-				const fileName = pathInfo?.name || originalPath.split('/').pop() || originalPath;
+				const fileName = pathInfo?.name || file.originalname.split('/').pop() || file.originalname;
 				const folderPath = pathInfo?.path || '';
 				const normalizedFolderPath = folderPath.startsWith('/') ? folderPath : '/' + folderPath;
 
