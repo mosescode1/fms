@@ -235,6 +235,7 @@ class FileController{
     }
 
 	async accessFiles(req:Request, res:Response) {
+        console.log("accessing files controller");
         const userId = req.user.userId;
         const { page, limit, skip } = getPaginationParams(req);
         const { items, total } = await fileServiceInstance.accessFiles(userId, skip, limit);

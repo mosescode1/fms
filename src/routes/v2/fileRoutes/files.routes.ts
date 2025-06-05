@@ -19,6 +19,12 @@ router.get(
 	checkRolePermission(roles.SUPER_ADMIN),
 	catchAsync(fileController.allFiles)
 );
+router.get(
+	'/accessible',
+	Authenticate,
+	checkRolePermission(roles.ALL),
+	catchAsync(fileController.accessFiles)
+);
 
 router.get(
 	'/folders',
@@ -28,7 +34,7 @@ router.get(
 );
 
 router.get(
-	'{/:fileId}',
+	'/:fileId',
 	Authenticate,
 	checkRolePermission(roles.ALL),
 	checkPermission(Permissions.OPEN_FILE),
@@ -70,12 +76,7 @@ router.post(
 );
 
 // get all files and folder that a user has access to
-router.get(
-	'/access',
-	Authenticate,
-	checkRolePermission(roles.ALL),
-	catchAsync(fileController.accessFiles)
-);
+
 
 // Mark as deletion
 router.delete("/folders{/:folderId}", Authenticate, checkRolePermission(roles.ALL), checkPermission(Permissions.EXECUTE), catchAsync(fileController.userDeleteFolder));

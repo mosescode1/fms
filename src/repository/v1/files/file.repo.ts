@@ -319,6 +319,7 @@ class fileRepository {
 
     async accessFiles(userId: string, skip?: number, limit?: number): Promise<{ items: any[], total: number }> {
         try {
+            console.log("Fetching files and folders for user:", userId);
             // Get all group IDs the user is a member of
             const userGroups = await prisma.groupMember.findMany({
                 where: { accountId: userId },

@@ -50,6 +50,8 @@ export const hasPermission = async (
 
 const checkPermission = (requiredPermission: Permissions) => {
 	return async (req: Request, res: Response, next: NextFunction) => {
+
+		console.log('Checking permission:', requiredPermission);
 		let resourceType: ResourceType | undefined;
 		// get resource type from query params
 		console.log(req.query.resourceType)

@@ -408,6 +408,7 @@ class fileService {
 
 	async accessFiles(userId: string, skip?: number, limit?: number) {
 		try {
+			console.log("Fetching user files with skip:", skip, "and limit:", limit);
 			return await fileRepo.accessFiles(userId, skip, limit);
 		} catch (error: any) {
 			console.error("Error fetching user files", error);
