@@ -1,5 +1,7 @@
-import { google } from "googleapis";
+import {drive_v3, google} from "googleapis";
+// import path from "path"
 import dotenv from "dotenv";
+// import { JWT } from "google-auth-library";
 
 // Load environment variables
 dotenv.config();
@@ -25,5 +27,26 @@ oauth2Client.setCredentials({
 
 google.options({ auth: oauth2Client });
 
+
 const googleDrive = google.drive("v3");
 export  { googleDrive};
+
+
+
+// const auth = new google.auth.GoogleAuth({
+// 	keyFile: path.join(__dirname, "service.json"),
+// 	scopes: ["https://www.googleapis.com/auth/drive"],
+// });
+//
+//
+// const drive: Promise<drive_v3.Drive> = (async () => {
+// 	const authClient = (await auth.getClient()) as JWT;
+// 	return  google.drive({ version: "v3", auth: authClient });
+// })();
+//
+// let googleDrive ;
+// (async () => {
+// 	googleDrive = await drive;
+// })()
+//
+// export { googleDrive };

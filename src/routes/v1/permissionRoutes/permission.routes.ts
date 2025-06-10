@@ -2,7 +2,9 @@ import {Router} from "express"
 import {Authenticate} from '../../../middleware/authenticate';
 import permissionController from "../../../controller/v1/permission/permission.controller"
 import {catchAsync} from '../../../lib';
-import { checkRolePermission, checkAclEntryResources } from '../../../middleware/permission';
+import { Permissions } from '@prisma/client';
+
+import {checkRolePermission, checkAclEntryResources, checkPermission} from '../../../middleware/permission';
 import  roles  from '../../../types/roles.types';
 
 const router = Router();
@@ -13,6 +15,7 @@ router.get(
     "/", 
     Authenticate, 
     checkRolePermission(SUPER_AND_ADMIN),
+	// checkPermission(Permissions.MANAGE_PERMISSIONS),
     catchAsync(permissionController.getAllPermission)
 );
 
