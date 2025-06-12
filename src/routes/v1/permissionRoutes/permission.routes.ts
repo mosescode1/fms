@@ -31,7 +31,7 @@ router.post(
     Authenticate, 
     checkRolePermission(SUPER_ADMIN),
     checkAclEntryResources,
-    catchAsync(permissionController.createPermission)
+    catchAsync(permissionController.createPermissionGroup)
 );
 
 // create a new permission on a group for file
@@ -40,7 +40,7 @@ router.post(
     Authenticate, 
     checkRolePermission(SUPER_ADMIN),
     checkAclEntryResources,
-    catchAsync(permissionController.createPermission)
+    catchAsync(permissionController.createPermissionGroup)
 );
 
 // Create a new permission on group for files array
@@ -49,7 +49,7 @@ router.post(
     Authenticate, 
     checkRolePermission(SUPER_ADMIN),
     checkAclEntryResources,
-    catchAsync(permissionController.createPermission)
+    catchAsync(permissionController.createPermissionGroup)
 );
 
 // create a new permission on user for folder
@@ -58,7 +58,7 @@ router.post(
     Authenticate, 
     checkRolePermission(SUPER_ADMIN),
     checkAclEntryResources,
-    catchAsync(permissionController.createPermission)
+    catchAsync(permissionController.createPermissionGroup)
 );
 
 // create a new permission on user for file
@@ -67,7 +67,7 @@ router.post(
     Authenticate, 
     checkRolePermission(SUPER_ADMIN),
     checkAclEntryResources,
-    catchAsync(permissionController.createPermission)
+    catchAsync(permissionController.createPermissionGroup)
 );
 
 // Get permission by ID
