@@ -222,7 +222,9 @@ class AuthController {
 			});
 		}
 
-		if (user && user.role !== 'MEMBER' || user.role == 'ADMIN') {
+		console.log(user.role);
+
+		if (user && user.role !== 'MEMBER' && user.role !== 'ADMIN') {
 			throw new AppError({
 				message: 'You are not authorized to login',
 				statusCode: 403,
