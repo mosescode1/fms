@@ -5,14 +5,15 @@ import userService from '../../../service/v1/user/user.service';
 
 class PermissionController{
 
-	createMemberPermission = async (req:Request, res:Response) => {
+	createMemberPermission = async (req: Request, res: Response) => {
 		try {
 			const {
 				resourceType,
 				permissions,
 				folderId,
+				fileId,
 				accountId,
-				inherited = false 
+				inherited = false
 			} = req.body;
 
 			// Validate required fields
@@ -23,15 +24,6 @@ class PermissionController{
 				});
 			}
 
-			// Validate that folderId is provided for folder permissions
-			if (resourceType === ResourceType.FOLDER && !folderId) {
-				return res.status(400).json({
-					status: 'error',
-					message: "Folder ID is required for folder permissions"
-				});
-			}
-
-			// Validate that accountId is provided
 			if (!accountId) {
 				return res.status(400).json({
 					status: 'error',
@@ -39,16 +31,21 @@ class PermissionController{
 				});
 			}
 
-			// Create permission data object
-			const permissionData = {
-				resourceType: resourceType as ResourceType,
-				permissions: permissions as Permissions[],
-				inherited,
-				folderId,
-				accountId
-			};
+			if (resourceType === ResourceType.FOLDER && !folderId) {
+				return res.status(400).json({
+					status: 'error',
+					message: "Folder ID is required for folder permissions"
+				});
+			}
 
-			// check if the user exists
+			if (resourceType === ResourceType.FILE && !fileId) {
+				return res.status(400).json({
+					status: 'error',
+					message: "File ID is required for file permissions"
+				});
+			}
+
+			// Check if user exists
 			const user = await userService.findUserById(accountId);
 			if (!user) {
 				return res.status(404).json({
@@ -57,19 +54,29 @@ class PermissionController{
 				});
 			}
 
-			let permission ;
-			// check if the user already has permission on this folder
-			const existingPermission = await permissionService.getUserPermissionByFolderId(accountId, folderId);
+			// Build permission data
+			const permissionData = {
+				resourceType: resourceType as ResourceType,
+				permissions: permissions as Permissions[],
+				inherited,
+				folderId: resourceType === ResourceType.FOLDER ? folderId : undefined,
+				fileId: resourceType === ResourceType.FILE ? fileId : undefined,
+				accountId
+			};
 
-			if (existingPermission) {
-				// If permission already exists, update it
-				permission = await permissionService.updatePermission(existingPermission.id, permissionData);
-
-			}else{
-				permission = await permissionService.createPermission(permissionData);
+			let existingPermission;
+			if (resourceType === ResourceType.FOLDER) {
+				existingPermission = await permissionService.getUserPermissionByFolderId(accountId, folderId);
+			} else {
+				existingPermission = await permissionService.getUserPermissionByFileId(accountId, fileId);
 			}
 
-			// Create the permission
+			let permission;
+			if (existingPermission) {
+				permission = await permissionService.updatePermission(existingPermission.id, permissionData);
+			} else {
+				permission = await permissionService.createPermission(permissionData);
+			}
 
 			res.status(201).json({
 				status: 'success',
@@ -83,7 +90,87 @@ class PermissionController{
 				message: error.message
 			});
 		}
-	}
+	};
+
+	// TODO: Create a new permission for member on file Might use this for file permissions later
+	// createMemberPermissionFile = async (req:Request, res:Response) => {
+	// 	try {
+	// 		const {
+	// 			resourceType,
+	// 			permissions,
+	// 			fileId,
+	// 			accountId,
+	// 			inherited = false
+	// 		} = req.body;
+	//
+	// 		// Validate required fields
+	// 		if (!resourceType || !permissions || permissions.length === 0) {
+	// 			return res.status(400).json({
+	// 				status: 'error',
+	// 				message: "Resource type and permissions are required"
+	// 			});
+	// 		}
+	//
+	// 		// Validate that fileId is provided for file permissions
+	// 		if (resourceType === ResourceType.FILE && !fileId) {
+	// 			return res.status(400).json({
+	// 				status: 'error',
+	// 				message: "File ID is required for file permissions"
+	// 			});
+	// 		}
+	//
+	// 		// Validate that accountId is provided
+	// 		if (!accountId) {
+	// 			return res.status(400).json({
+	// 				status: 'error',
+	// 				message: "Account ID is required for member permissions"
+	// 			});
+	// 		}
+	//
+	// 		// Create permission data object
+	// 		const permissionData = {
+	// 			resourceType: resourceType as ResourceType,
+	// 			permissions: permissions as Permissions[],
+	// 			inherited,
+	// 			fileId,
+	// 			accountId
+	// 		};
+	//
+	// 		// check if the user exists
+	// 		const user = await userService.findUserById(accountId);
+	// 		if (!user) {
+	// 			return res.status(404).json({
+	// 				status: 'error',
+	// 				message: "User not found"
+	// 			});
+	// 		}
+	//
+	// 		let permission ;
+	// 		// check if the user already has permission on this file
+	// 		const existingPermission = await permissionService.getUserPermissionByFileId(accountId, fileId);
+	//
+	// 		if (existingPermission) {
+	// 			// If permission already exists, update it
+	// 			permission = await permissionService.updatePermission(existingPermission.id, permissionData);
+	//
+	// 		}else{
+	// 			permission = await permissionService.createPermission(permissionData);
+	// 		}
+	//
+	// 		res.status(201).json({
+	// 			status: 'success',
+	// 			data: {
+	// 				permission
+	// 			}
+	// 		});
+	// 	} catch (error: any) {
+	// 		res.status(error.statusCode || 500).json({
+	// 			status: 'error',
+	// 			message: error.message
+	// 		});
+	// 	}
+	// }
+
 
 	getAllPermission = async (req:Request, res:Response) =>{
 		try {
@@ -103,7 +190,7 @@ class PermissionController{
 		}
 	}
 
-	createPermission = async (req:Request, res:Response)=>{
+	createPermissionGroup = async (req:Request, res:Response)=>{
 		try {
 			const {
 				resourceType,
