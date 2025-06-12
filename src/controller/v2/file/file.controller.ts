@@ -18,7 +18,7 @@ class FileController{
         if (folderName === undefined || folderName === null || folderName === "") {
             throw new AppError({message: "Folder name is required", statusCode: 400});
         }
-        const parentId = req.params.parentId ? req.params.parentId : undefined;
+        const parentId = req.params.resourceId ? req.params.resourceId : undefined;
 
 
 

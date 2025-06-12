@@ -48,8 +48,28 @@ class PermissionController{
 				accountId
 			};
 
+			// check if the user exists
+			const user = await userService.findUserById(accountId);
+			if (!user) {
+				return res.status(404).json({
+					status: 'error',
+					message: "User not found"
+				});
+			}
+
+			let permission ;
+			// check if the user already has permission on this folder
+			const existingPermission = await permissionService.getUserPermissionByFolderId(accountId, folderId);
+
+			if (existingPermission) {
+				// If permission already exists, update it
+				permission = await permissionService.updatePermission(existingPermission.id, permissionData);
+
+			}else{
+				permission = await permissionService.createPermission(permissionData);
+			}
+
 			// Create the permission
-			const permission = await permissionService.createPermission(permissionData);
 
 			res.status(201).json({
 				status: 'success',

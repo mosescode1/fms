@@ -102,6 +102,27 @@ class PermissionRepo{
 		}
 	}
 
+	async updatePermission(permissionId: string, updateData: Partial<{
+		permissions: Permissions[];
+	}>) {
+		try{
+			return await prisma.aclEntry.update({
+				where: {
+					id: permissionId
+				},
+				data: updateData,
+				include: {
+					account: true,
+					Folder: true,
+					file: true,
+					securityGroup: true
+				}
+			})
+		}catch (error:any){
+			throw new Error(error.message);
+		}
+	}
+
 	async getUserPermissionByFileId(userId: string, fileId: string) {
 		try{
 			return await prisma.aclEntry.findFirst({

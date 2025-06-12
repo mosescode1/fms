@@ -162,10 +162,11 @@ class PermissionService{
 			}
 			return groupPermissions;
 		} catch (error: any) {
+			console.log(error.message);
 			if (error instanceof AppError) {
 				throw error;
 			} else {
-				throw new AppError({message: error.message, statusCode: 500});
+				throw new AppError({message: "Internal Server Error", statusCode: 500});
 			}
 		}
 	}
@@ -180,10 +181,42 @@ class PermissionService{
 			// return all users
 			return await permissionRepo.getPermissionUsers(permissionId)
 		}catch (error:any){
+			console.log(error.message);
+
 			if (error instanceof AppError) {
 				throw error;
 			} else {
-				throw new AppError({message: error.message, statusCode: 500});
+				throw new AppError({message: "Internal Server Error", statusCode: 500});
+			}
+		}
+	}
+
+	async getUserPermissionByFolderId(accountId: any, folderId: any) {
+		try {
+			 return await permissionRepo.getUserPermissionByFolderId(accountId, folderId);
+		}catch (error: any) {
+			console.log(error.message);
+
+			if (error instanceof AppError) {
+				throw error;
+			} else {
+
+				throw new AppError({message: "Internal Server Error", statusCode: 500});
+			}
+		}
+	}
+
+	async updatePermission(id: any, permissionData: {
+		permissions: (Permissions)[];
+	}) {
+		try {
+			return await permissionRepo.updatePermission(id, permissionData);
+		}catch (error: any) {
+			console.log(error.message);
+			if (error instanceof AppError) {
+				throw error;
+			} else {
+				throw new AppError({message: "Internal Server Error", statusCode: 500});
 			}
 		}
 	}
