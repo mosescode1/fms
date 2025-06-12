@@ -220,6 +220,19 @@ class PermissionService{
 			}
 		}
 	}
+
+	async getUserPermissionByFileId(accountId: any, fileId: any) {
+		try {
+			return await permissionRepo.getUserPermissionByFileId(accountId, fileId);
+		}catch (error: any) {
+			console.log(error.message);
+			if (error instanceof AppError) {
+				throw error;
+			} else {
+				throw new AppError({message: "Internal Server Error", statusCode: 500});
+			}
+		}
+	}
 }
 
 
