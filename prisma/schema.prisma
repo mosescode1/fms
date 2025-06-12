@@ -219,22 +219,24 @@ model GroupMember {
 enum Permissions {
   // General permissions
   FULL_ACCESS // Implies all permissions below
-  READ // View resource content
-  WRITE // Modify resource content
-  UPLOAD // Add files to folders
-  DOWNLOAD // Retrieve files
-  RENAME // Change resource name
-  MOVE // Relocate resource
-  COPY // Duplicate resource
 
   // File-specific
   OPEN_FILE // Open a file
   DELETE_FILE // Remove a file
+  UPLOAD_FILE // Upload a new file
+  RENAME_FILE // Change file name
+  DOWNLOAD_FILE // Download a file
+  MOVE_FILE // Move a file to another folder
+  COPY_FILE // Copy a file to another location
   SHARE_FILE // Share a file with others
 
   // Folder-specific
   CREATE_FOLDER // Create a new folder
   OPEN_FOLDER // View folder contents
+  RENAME_FOLDER // Change folder name
+  MOVE_FOLDER // Move a folder to another location
+  COPY_FOLDER // Copy a folder to another location
+  UPLOAD_FOLDER // Upload a new folder
   DELETE_FOLDER // Remove a folder
   SHARE_FOLDER // Share a folder with others
 
