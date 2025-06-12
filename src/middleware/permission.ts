@@ -73,6 +73,8 @@ const checkPermission = (requiredPermission: Permissions) => {
 
 		const resourceId = req.params.resourceId as string;
 
+		console.log('Checking permission:', resourceId);
+
 		const user = req.user;
 
 		if (user.role === 'SUPER_ADMIN') {
@@ -82,7 +84,7 @@ const checkPermission = (requiredPermission: Permissions) => {
 		if (!resourceType || !resourceId) {
 			return next(
 				new AppError({
-					message: 'you cant create file or folder in the root directory',
+					message: 'Missing resource type or resource ID',
 					statusCode: 403,
 				})
 			);
