@@ -34,8 +34,9 @@ router.get(
 	catchAsync(fileController.allFolders)
 );
 
+// open a file by ID
 router.get(
-	'/:fileId',
+	'/:resourceId',
 	Authenticate,
 	checkRolePermission(roles.ALL),
 	checkPermission(Permissions.OPEN_FILE),
