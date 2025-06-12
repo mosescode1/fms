@@ -152,7 +152,7 @@ class AuthController {
 			});
 		}
 
-		if (user && user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN') {
+		if (user && user.role !== 'SUPER_ADMIN') {
 			throw new AppError({
 				message: 'You are not authorized to login',
 				statusCode: 403,
@@ -222,7 +222,7 @@ class AuthController {
 			});
 		}
 
-		if (user && user.role !== 'MEMBER') {
+		if (user && user.role !== 'MEMBER' || user.role == 'ADMIN') {
 			throw new AppError({
 				message: 'You are not authorized to login',
 				statusCode: 403,
