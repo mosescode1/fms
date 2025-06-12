@@ -67,7 +67,7 @@ router.post(
 	Authenticate,
 	upload.single('file'),
 	checkRolePermission(roles.ALL),
-	checkPermission(Permissions.UPLOAD),
+	checkPermission(Permissions.UPLOAD_FILE),
 	catchAsync(fileController.uploadFile)
 );
 
@@ -76,7 +76,7 @@ router.post(
 	Authenticate,
 	upload.array('files'),
 	checkRolePermission(roles.ALL),
-	checkPermission(Permissions.UPLOAD),
+	checkPermission(Permissions.UPLOAD_FOLDER),
 	catchAsync(fileController.uploadFolder)
 );
 
