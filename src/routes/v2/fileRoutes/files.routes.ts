@@ -44,7 +44,7 @@ router.get(
 
 // Create a new folder
 router.post(
-	'/create/folder{/:parentId}',
+	'/create/folder{/:resourceId}',
 	Authenticate,
 	checkRolePermission(roles.ALL),
 	checkPermission(Permissions.CREATE_FOLDER),
