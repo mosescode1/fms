@@ -249,13 +249,13 @@ class FileController{
 	}
 
     async getFileById(req: Request, res: Response) {
-        const fileId = req.params.fileId;
+        const resourceId = req.params.resourceId;
 
-        if (!fileId) {
+        if (!resourceId) {
             throw new AppError({message: "File ID is required", statusCode: 400});
         }
 
-        const file = await fileServiceInstance.getFileById(fileId);
+        const file = await fileServiceInstance.getFileById(resourceId);
 
         if (!file) {
             throw new AppError({message: "File not found", statusCode: 404});
