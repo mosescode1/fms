@@ -61,6 +61,7 @@ const checkPermission = (requiredPermission: Permissions) => {
 			resourceType = resourceTypeFromQuery;
 		}
 
+		console.log("here is the resource type", resourceType);
 		if (!resourceType) {
 			return next(
 				new AppError({
@@ -81,8 +82,8 @@ const checkPermission = (requiredPermission: Permissions) => {
 		if (!resourceType || !resourceId) {
 			return next(
 				new AppError({
-					message: 'Resource type and ID are required',
-					statusCode: 400,
+					message: 'you cant create file or folder in the root directory',
+					statusCode: 403,
 				})
 			);
 		}
