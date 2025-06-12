@@ -55,15 +55,15 @@ class PermissionService{
 				// }
 
 				// Check if the user already has permission on this folder
-				if (permissionData.accountId) {
-					const existingPermission = await permissionRepo.getUserPermissionByFolderId(
-						permissionData.accountId, 
-						permissionData.folderId
-					);
-					if (existingPermission) {
-						throw new AppError({message: "Permission already set for this user on this folder", statusCode: 400});
-					}
-				}
+				// if (permissionData.accountId) {
+				// 	const existingPermission = await permissionRepo.getUserPermissionByFolderId(
+				// 		permissionData.accountId,
+				// 		permissionData.folderId
+				// 	);
+				// 	if (existingPermission) {
+				// 		throw new AppError({message: "Permission already set for this user on this folder", statusCode: 400});
+				// 	}
+				// }
 			}
 
 			// For file permissions
@@ -75,15 +75,15 @@ class PermissionService{
 				}
 
 				// Check if the user already has permission on this file
-				if (permissionData.accountId) {
-					const existingPermission = await permissionRepo.getUserPermissionByFileId(
-						permissionData.accountId, 
-						permissionData.fileId
-					);
-					if (existingPermission) {
-						throw new AppError({message: "Permission already set for this user on this file", statusCode: 400});
-					}
-				}
+				// if (permissionData.accountId) {
+				// 	const existingPermission = await permissionRepo.getUserPermissionByFileId(
+				// 		permissionData.accountId,
+				// 		permissionData.fileId
+				// 	);
+				// 	if (existingPermission) {
+				// 		throw new AppError({message: "Permission already set for this user on this file", statusCode: 400});
+				// 	}
+				// }
 			}
 
 			// Create permission

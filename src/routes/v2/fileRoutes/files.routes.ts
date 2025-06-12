@@ -42,6 +42,7 @@ router.get(
 	catchAsync(fileController.getFileById)
 );
 
+// Create a new folder
 router.post(
 	'/create/folder{/:parentId}',
 	Authenticate,
@@ -49,6 +50,8 @@ router.post(
 	checkPermission(Permissions.CREATE_FOLDER),
 	catchAsync(fileController.createFolder)
 );
+
+//Open a folder by ID
 router.get(
 	'/folders{/:resourceId}',
 	Authenticate,
@@ -58,6 +61,7 @@ router.get(
 );
 
 
+// upload file and folder
 router.post(
 	'/upload/file{/:resourceId}',
 	Authenticate,
