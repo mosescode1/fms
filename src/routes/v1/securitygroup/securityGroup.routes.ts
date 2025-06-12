@@ -13,7 +13,7 @@ const router = Router();
 router.get(
 	'/',
 	Authenticate,
-	checkRolePermission(roles.SUPER_AND_ADMIN),
+	checkRolePermission(roles.SUPER_ADMIN),
 	catchAsync(securityGroupPermissionController.getAllSecurityGroups)
 );
 
@@ -21,7 +21,7 @@ router.get(
 router.post(
 	'/',
 	Authenticate,
-	checkRolePermission(roles.SUPER_AND_ADMIN),
+	checkRolePermission(roles.SUPER_ADMIN),
 	catchAsync(securityGroupPermissionController.createSecurityGroup)
 );
 
@@ -29,7 +29,7 @@ router.post(
 router.patch(
 	'{/:groupId}',
 	Authenticate,
-	checkRolePermission(roles.SUPER_AND_ADMIN),
+	checkRolePermission(roles.SUPER_ADMIN),
 	catchAsync(securityGroupPermissionController.editSecurityGroup)
 );
 
@@ -37,7 +37,7 @@ router.patch(
 router.delete(
 	'{/:groupId}',
 	Authenticate,
-	checkRolePermission(roles.SUPER_AND_ADMIN),
+	checkRolePermission(roles.SUPER_ADMIN),
 	catchAsync(securityGroupPermissionController.deleteSecurityGroup)
 );
 
@@ -45,7 +45,7 @@ router.delete(
 router.post(
 	'{/:groupId}/add-user',
 	Authenticate,
-	checkRolePermission(roles.SUPER_AND_ADMIN),
+	checkRolePermission(roles.SUPER_ADMIN),
 	catchAsync(securityGroupPermissionController.addUserToGroup)
 );
 
@@ -53,7 +53,7 @@ router.post(
 router.get(
 	'{/:groupId/}users',
 	Authenticate,
-	checkRolePermission(roles.SUPER_AND_ADMIN),
+	checkRolePermission(roles.SUPER_ADMIN),
 	catchAsync(securityGroupPermissionController.getUsersInGroup));
 
 

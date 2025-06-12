@@ -14,7 +14,7 @@ const allRoles = ['SUPER_ADMIN', 'ADMIN', 'USER'];
 router.get(
 	'/',
 	Authenticate,
-	checkRolePermission(superAdminAndAdmin),
+	checkRolePermission(superAdmin),
 	catchAsync(userController.getAllUsers)
 );
 
@@ -22,7 +22,7 @@ router.get(
 router.post(
 	'/add-user',
 	catchAsync(Authenticate),
-	checkRolePermission(superAdminAndAdmin),
+	checkRolePermission(superAdmin),
 	catchAsync(userController.createNewUser)
 );
 
@@ -30,7 +30,7 @@ router.post(
 router.post(
 	'/permission{/:id}',
 	Authenticate,
-	checkRolePermission(superAdminAndAdmin),
+	checkRolePermission(superAdmin),
 	catchAsync(userController.giveUserPermissions)
 );
 

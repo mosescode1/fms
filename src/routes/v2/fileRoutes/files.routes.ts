@@ -19,6 +19,7 @@ router.get(
 	checkRolePermission(roles.SUPER_ADMIN),
 	catchAsync(fileController.allFiles)
 );
+// Returns all the files accessible to that user
 router.get(
 	'/accessible',
 	Authenticate,
@@ -75,15 +76,14 @@ router.post(
 	catchAsync(fileController.uploadFolder)
 );
 
-// get all files and folder that a user has access to
 
 
 // Mark as deletion
-router.delete("/folders{/:folderId}", Authenticate, checkRolePermission(roles.ALL), checkPermission(Permissions.EXECUTE), catchAsync(fileController.userDeleteFolder));
-router.delete("/file{/:fileId}", Authenticate, checkRolePermission(roles.ALL), checkPermission(Permissions.EXECUTE), catchAsync(fileController.userDeleteFile));
+router.delete("/folders{/:folderId}", Authenticate, checkRolePermission(roles.ALL), checkPermission(Permissions.DELETE_FOLDER), catchAsync(fileController.userDeleteFolder));
+router.delete("/file{/:fileId}", Authenticate, checkRolePermission(roles.ALL), checkPermission(Permissions.DELETE_FILE), catchAsync(fileController.userDeleteFile));
 
 // Permanent deletion and restoration of file
-router.get("/file/restore{/:fileId}", Authenticate, checkRolePermission(roles.SUPER_AND_ADMIN), catchAsync(trashController.restoreTrashItem));
-router.delete("/file/delete{/:fileId}", Authenticate, checkRolePermission(roles.SUPER_AND_ADMIN), catchAsync(trashController.permanentlyDeleteItem));
+router.get("/file/restore{/:fileId}", Authenticate, checkRolePermission(roles.SUPER_ADMIN), catchAsync(trashController.restoreTrashItem));
+router.delete("/file/delete{/:fileId}", Authenticate, checkRolePermission(roles.SUPER_ADMIN), catchAsync(trashController.permanentlyDeleteItem));
 
 export default router;

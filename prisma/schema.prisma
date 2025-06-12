@@ -146,7 +146,7 @@ model AuditLog {
 enum Action {
   CREATE
   READ
-  UPLOAD
+  UPLOAD_FILE
   UPLOAD_FOLDER
   UPDATE
   DELETE
@@ -221,7 +221,6 @@ enum Permissions {
   FULL_ACCESS // Implies all permissions below
   READ // View resource content
   WRITE // Modify resource content
-  EXECUTE // Run executable files
   UPLOAD // Add files to folders
   DOWNLOAD // Retrieve files
   RENAME // Change resource name
@@ -238,11 +237,9 @@ enum Permissions {
   OPEN_FOLDER // View folder contents
   DELETE_FOLDER // Remove a folder
   SHARE_FOLDER // Share a folder with others
-  ARCHIVE // Archive folder/file
-  RESTORE // Restore from trash
 
   // Administrative
-  MANAGE_PERMISSIONS // Modify ACLs
-  MANAGE_USERS // Add/remove users
-  MANAGE_ROLES // Assign roles
+  // MANAGE_PERMISSIONS // Modify ACLs
+  // MANAGE_USERS // Add/remove users
+  // MANAGE_ROLES // Assign roles
 }

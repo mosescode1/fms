@@ -8,20 +8,20 @@ import {checkRolePermission, checkAclEntryResources, checkPermission} from '../.
 import  roles  from '../../../types/roles.types';
 
 const router = Router();
-const { SUPER_AND_ADMIN, } = roles;
+const { SUPER_ADMIN } = roles;
 
 // Get all permissions
 router.get(
     "/", 
     Authenticate, 
-    checkRolePermission(SUPER_AND_ADMIN),
+    checkRolePermission(SUPER_ADMIN),
 	// checkPermission(Permissions.MANAGE_PERMISSIONS),
     catchAsync(permissionController.getAllPermission)
 );
 
 router.post("/member",
 	Authenticate,
-	checkRolePermission(SUPER_AND_ADMIN),
+	checkRolePermission(SUPER_ADMIN),
 	checkAclEntryResources,
 	catchAsync(permissionController.createMemberPermission))
 
@@ -29,7 +29,7 @@ router.post("/member",
 router.post(
     "/group/folder", 
     Authenticate, 
-    checkRolePermission(SUPER_AND_ADMIN),
+    checkRolePermission(SUPER_ADMIN),
     checkAclEntryResources,
     catchAsync(permissionController.createPermission)
 );
@@ -38,7 +38,7 @@ router.post(
 router.post(
     "/group/file", 
     Authenticate, 
-    checkRolePermission(SUPER_AND_ADMIN),
+    checkRolePermission(SUPER_ADMIN),
     checkAclEntryResources,
     catchAsync(permissionController.createPermission)
 );
@@ -47,7 +47,7 @@ router.post(
 router.post(
     "/group/files", 
     Authenticate, 
-    checkRolePermission(SUPER_AND_ADMIN),
+    checkRolePermission(SUPER_ADMIN),
     checkAclEntryResources,
     catchAsync(permissionController.createPermission)
 );
@@ -56,7 +56,7 @@ router.post(
 router.post(
     "/user/folder", 
     Authenticate, 
-    checkRolePermission(SUPER_AND_ADMIN),
+    checkRolePermission(SUPER_ADMIN),
     checkAclEntryResources,
     catchAsync(permissionController.createPermission)
 );
@@ -65,7 +65,7 @@ router.post(
 router.post(
     "/user/file", 
     Authenticate, 
-    checkRolePermission(SUPER_AND_ADMIN),
+    checkRolePermission(SUPER_ADMIN),
     checkAclEntryResources,
     catchAsync(permissionController.createPermission)
 );
@@ -74,7 +74,7 @@ router.post(
 router.get(
     "{/:permissionId}",
     Authenticate, 
-    checkRolePermission(SUPER_AND_ADMIN),
+    checkRolePermission(SUPER_ADMIN),
     catchAsync(permissionController.getPermissionById)
 );
 
@@ -82,7 +82,7 @@ router.get(
 router.get(
 	"{/:permissionId/}users",
 	Authenticate,
-	checkRolePermission(SUPER_AND_ADMIN),
+	checkRolePermission(SUPER_ADMIN),
 	catchAsync(permissionController.getPermissionUsers)
 );
 
@@ -90,7 +90,7 @@ router.get(
 router.get(
     "/user{/:userId}",
     Authenticate, 
-    checkRolePermission(SUPER_AND_ADMIN),
+    checkRolePermission(SUPER_ADMIN),
     catchAsync(permissionController.getUserPermissions)
 );
 
@@ -98,7 +98,7 @@ router.get(
 router.get(
     "/group{/:groupId}",
     Authenticate, 
-    checkRolePermission(SUPER_AND_ADMIN),
+    checkRolePermission(SUPER_ADMIN),
     catchAsync(permissionController.getGroupPermissions)
 );
 
@@ -107,7 +107,7 @@ router.get(
 router.delete(
 	"{/:permissionId}",
     Authenticate, 
-    checkRolePermission(SUPER_AND_ADMIN),
+    checkRolePermission(SUPER_ADMIN),
     catchAsync(permissionController.removePermission)
 );
 
