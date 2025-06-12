@@ -6,6 +6,7 @@ import {FolderData} from '../../../types/trash.types';
 import googleDriveRepo from '../../../repository/v2/google-drive/google.drive.repo';
 import cacheService from '../../../lib/cache';
 import auditLogService from '../../../service/v1/auditLog/audit_log.service';
+import {prisma} from '../../../prisma/prisma.client';
 
 type FileData = {
 	name: string;
@@ -118,7 +119,7 @@ class fileService {
 
 			// Create audit log
 			await auditLogService.createAuditLog({
-				action: "UPLOAD",
+				action: "UPLOAD_FILE",
 				targetId: newFile.id,
 				actorId: fileData.userId,
 				targetType: "FILE",
