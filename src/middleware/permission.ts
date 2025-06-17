@@ -17,36 +17,75 @@ const checkRolePermission = (roles: string[]) => {
 		next();
 	};
 };
-
 export const hasPermission = async (
 	userId: string,
 	resourceType: ResourceType,
 	resourceId: string,
 	requiredPermission: Permissions
 ): Promise<boolean> => {
-
 	// Get user's group IDs
 	const groupMemberships = await prisma.groupMember.findMany({
 		where: { accountId: userId },
 		select: { groupId: true },
 	});
-
 	const groupIds = groupMemberships.map((g) => g.groupId);
 
-	// Check if any group ACL entry grants the permission
-	const matchingAcl = await prisma.aclEntry.findFirst({
-		where: {
-			resourceType,
-			permissions: { has: requiredPermission },
-			OR: [{ accountId: userId }, { groupId: { in: groupIds } }],
-			...(resourceType === 'FILE'
-				? { fileId: resourceId }
-				: { folderId: resourceId }),
-		},
-	});
+	// Recursive function to check folder permissions up the tree
+	const checkFolderWithInheritance = async (folderId: string): Promise<boolean> => {
+		const acl = await prisma.aclEntry.findFirst({
+			where: {
+				resourceType: 'FOLDER',
+				permissions: { has: requiredPermission },
+				OR: [{ accountId: userId }, { groupId: { in: groupIds } }],
+				folderId,
+			},
+		});
 
-	return !!matchingAcl;
+		if (acl) return true;
+
+		// Check parent folder if any
+		const folder = await prisma.folder.findUnique({
+			where: { id: folderId },
+			select: { parentId: true },
+		});
+
+		if (folder?.parentId) {
+			return checkFolderWithInheritance(folder.parentId);
+		}
+
+		return false;
+	};
+
+	if (resourceType === 'FILE') {
+		// 1. Check permission directly on the file
+		const fileAcl = await prisma.aclEntry.findFirst({
+			where: {
+				resourceType: 'FILE',
+				permissions: { has: requiredPermission },
+				OR: [{ accountId: userId }, { groupId: { in: groupIds } }],
+				fileId: resourceId,
+			},
+		});
+
+		if (fileAcl) return true;
+
+		// 2. Get the file's parent folder and check recursively
+		const file = await prisma.file.findUnique({
+			where: { id: resourceId },
+			select: { folderId: true },
+		});
+
+		if (file?.folderId) {
+			return checkFolderWithInheritance(file.folderId);
+		}
+
+		return false;
+	} else {
+		// Folder resource: check directly and inherit upward
+		return checkFolderWithInheritance(resourceId);
+	}
 };
+
 
 const checkPermission = (requiredPermission: Permissions) => {
 	return async (req: Request, res: Response, next: NextFunction) => {
