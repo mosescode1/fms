@@ -3,7 +3,7 @@ import { AppError } from '../lib';
 import { prisma } from '../prisma/prisma.client';
 import { Permissions, ResourceType } from '@prisma/client';
 
-//
+// check Role Permission Middleware
 const checkRolePermission = (roles: string[]) => {
 	return (req: Request, _: Response, next: NextFunction) => {
 		if (!roles.includes(req.user.role)) {
@@ -17,6 +17,34 @@ const checkRolePermission = (roles: string[]) => {
 		next();
 	};
 };
+
+
+const checkFolderWithInheritance = async (folderId: string, resourceType: ResourceType, requiredPermission:Permissions, userId:string, groupIds: string[]): Promise<boolean> => {
+	const acl=  await prisma.aclEntry.findFirst({
+		where: {
+			resourceType: resourceType,
+			permissions: { has: requiredPermission },
+			OR: [{ accountId: userId }, { groupId: { in: groupIds } }],
+			folderId,
+		},
+	});
+	return !!acl;
+};
+
+const checkFileWithInheritance = async (fileId: string, resourceType: ResourceType, requiredPermission:Permissions, userId:string, groupIds: string[]): Promise<boolean> => {
+	const acl = await prisma.aclEntry.findFirst({
+		where: {
+			resourceType: resourceType,
+			permissions: { has: requiredPermission },
+			OR: [{ accountId: userId }, { groupId: { in: groupIds } }],
+			fileId,
+		},
+	});
+	return !!acl;
+}
+
+
+// recursive function to check if user has permission on a resource or its parent folder
 export const hasPermission = async (
 	userId: string,
 	resourceType: ResourceType,
@@ -30,60 +58,43 @@ export const hasPermission = async (
 	});
 	const groupIds = groupMemberships.map((g) => g.groupId);
 
-	// Recursive function to check folder permissions up the tree
-	const checkFolderWithInheritance = async (folderId: string): Promise<boolean> => {
-		const acl = await prisma.aclEntry.findFirst({
-			where: {
-				resourceType: 'FOLDER',
-				permissions: { has: requiredPermission },
-				OR: [{ accountId: userId }, { groupId: { in: groupIds } }],
-				folderId,
-			},
-		});
 
-		if (acl) return true;
-
-		// Check parent folder if any
-		const folder = await prisma.folder.findUnique({
-			where: { id: folderId },
-			select: { parentId: true },
-		});
-
-		if (folder?.parentId) {
-			return checkFolderWithInheritance(folder.parentId);
+	// recursive check for file and folder permissions recursively
+	if( resourceType === ResourceType.FILE) {
+		// File resource: check directly and inherit upward
+		const acl = await checkFileWithInheritance(resourceId, resourceType, requiredPermission, userId, groupIds);
+		if (acl) {
+			return true;
 		}
-
-		return false;
-	};
-
-	if (resourceType === 'FILE') {
-		// 1. Check permission directly on the file
-		const fileAcl = await prisma.aclEntry.findFirst({
-			where: {
-				resourceType: 'FILE',
-				permissions: { has: requiredPermission },
-				OR: [{ accountId: userId }, { groupId: { in: groupIds } }],
-				fileId: resourceId,
-			},
-		});
-
-		if (fileAcl) return true;
-
-		// 2. Get the file's parent folder and check recursively
+		// Check parent folder if any
 		const file = await prisma.file.findUnique({
-			where: { id: resourceId },
-			select: { folderId: true },
+			where: {id: resourceId},
+			select: {folderId: true},
 		});
 
 		if (file?.folderId) {
-			return checkFolderWithInheritance(file.folderId);
+			// recursively check the parent folder for permissions
+			return await  hasPermission(userId,ResourceType.FOLDER, file.folderId, requiredPermission);
+		}
+	}else if (resourceType === ResourceType.FOLDER) {
+
+		const acl = await checkFolderWithInheritance(resourceId, resourceType, requiredPermission, userId, groupIds);
+
+		if (acl) {
+			return true;
 		}
 
-		return false;
-	} else {
-		// Folder resource: check directly and inherit upward
-		return checkFolderWithInheritance(resourceId);
+		// check parent folder recursively
+		const folder = await prisma.folder.findUnique({
+			where: { id: resourceId },
+			select: { parentId: true },
+		});
+		if (folder?.parentId) {
+			return await hasPermission(userId, ResourceType.FOLDER, folder.parentId, requiredPermission);
+		}
 	}
+
+	return false;
 };
 
 
