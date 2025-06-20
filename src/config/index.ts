@@ -1,4 +1,5 @@
 import dotenv from 'dotenv';
+import * as process from 'node:process';
 
 dotenv.config({ path: '.env' });
 
@@ -8,12 +9,6 @@ const Config = {
 			process.env.NODE_ENV === 'development'
 				? ''
 				: process.env.DATABASE_URL || '',
-	},
-	redis: {
-		url:
-			process.env.NODE_ENV === 'development'
-				? 'redis://localhost:6379'
-				: process.env.REDIS_URL || '',
 	},
 	jwt: {
 		accessSecretToken:
@@ -32,6 +27,10 @@ const Config = {
 			process.env.NODE_ENV === 'development'
 				? '1d'
 				: process.env.REFRESH_SECRET_KEY_JWT_EXPIRES || '1d',
+	},
+	redis: {
+		port: process.env.REDIS_PORT || 6379,
+		host: process.env.REDIS_HOST || "localhost"
 	},
 	port: process.env.PORT || 5000,
 	environment: process.env.NODE_ENV || 'development',

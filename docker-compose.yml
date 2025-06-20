@@ -20,6 +20,18 @@ services:
     networks:
       - gemz-network
 
+  redis:
+    image: redis:alpine
+    container_name: gemz_redis
+    restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - gemz-network
+
   app:
     build:
       context: .
@@ -29,6 +41,8 @@ services:
       - "3000:3002"
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     networks:
       - gemz-network

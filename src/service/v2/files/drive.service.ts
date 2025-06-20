@@ -4,7 +4,7 @@ import streamifier from 'streamifier';
 import Readable from "stream"
 import {FolderData} from '../../../types/trash.types';
 import googleDriveRepo from '../../../repository/v2/google-drive/google.drive.repo';
-import cacheService from '../../../lib/cache';
+import {redisService} from '../../../lib/cache';
 import auditLogService from '../../../service/v1/auditLog/audit_log.service';
 import {prisma} from '../../../prisma/prisma.client';
 
@@ -54,7 +54,7 @@ class fileService {
 				folderData["remotePath"] = await this.getParentFolderPath(folderData.parentId, folderData.folderName);
 
 				// Invalidate parent folder cache since its children will change
-				cacheService.delete(`folder:${folderData.parentId}`);
+				await redisService.delete(`folder:${folderData.parentId}`);
 			}
 
 			// Check if the folder already exists
@@ -94,7 +94,7 @@ class fileService {
 				remotePath = await this.getParentFolderPath(fileData.folderId, fileData.name);
 
 				// Invalidate parent folder cache since its children will change
-				cacheService.delete(`folder:${fileData.folderId}`);
+				await redisService.delete(`folder:${fileData.folderId}`);
 			} else {
 				remotePath = this.rootPath;
 			}
@@ -152,11 +152,13 @@ class fileService {
 	async getFolderById(folderId: string) {
 		try {
 			// Use cache for folder data with a 5-minute TTL
-			return await cacheService.getOrSet(
-				`folder:${folderId}`,
-				async () => await fileRepo.getFolderById(folderId),
-				300 // 5 minutes
-			);
+			const cachedData =  await redisService.get(`folder:${folderId}`);
+			if (cachedData) {
+				return cachedData;
+			}
+			const folder = await fileRepo.getFolderById(folderId)
+			await redisService.set(`folder:${folderId}`, folder);
+			return folder;
 		} catch (error:any) {
 			throw new AppError({ message: error.message, statusCode: error.statusCode || 500 });
 		}
@@ -165,11 +167,13 @@ class fileService {
 	async getFileById(fileId: string) {
 		try {
 			// Use cache for file data with a 5-minute TTL
-			return await cacheService.getOrSet(
-				`file:${fileId}`,
-				async () => await fileRepo.getFileById(fileId),
-				300 // 5 minutes
-			);
+			const cachedData = await redisService.get(`file:${fileId}`);
+			if (cachedData) {
+				return cachedData;
+			}
+			const file = await fileRepo.getFileById(fileId);
+			await redisService.set(`file:${fileId}`, file);
+			return file;
 		} catch (error:any) {
 			throw new AppError({ message: error.message, statusCode: error.statusCode || 500 });
 		}
@@ -190,7 +194,7 @@ class fileService {
 			const result = await fileRepo.updateDeletedFolder(folderData);
 
 			// Invalidate folder cache
-			cacheService.delete(`folder:${folderData.folderId}`);
+			await redisService.delete(`folder:${folderData.folderId}`);
 
 			// Create audit log
 			await auditLogService.createAuditLog({
@@ -212,7 +216,7 @@ class fileService {
 			const result = await fileRepo.updateDeletedFile(fileData);
 
 			// Invalidate file cache
-			cacheService.delete(`file:${fileData.fileId}`);
+			await redisService.delete(`file:${fileData.fileId}`);
 
 			// Create audit log
 			await auditLogService.createAuditLog({

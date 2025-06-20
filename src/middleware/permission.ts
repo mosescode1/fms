@@ -43,6 +43,9 @@ const checkFileWithInheritance = async (fileId: string, resourceType: ResourceTy
 	return !!acl;
 }
 
+const generateRedisPermissionKey = (userId: string, resourceType: ResourceType, resourceId: string, requiredPermission: Permissions): string => {
+	return `permission:${userId}:${resourceType}:${resourceId}:${requiredPermission}`;
+}
 
 // recursive function to check if user has permission on a resource or its parent folder
 export const hasPermission = async (
@@ -64,6 +67,7 @@ export const hasPermission = async (
 		// File resource: check directly and inherit upward
 		const acl = await checkFileWithInheritance(resourceId, resourceType, requiredPermission, userId, groupIds);
 		if (acl) {
+			console.log(`permission:${JSON.stringify(acl)} on the file with the permission`, requiredPermission);
 			return true;
 		}
 		// Check parent folder if any
@@ -74,6 +78,7 @@ export const hasPermission = async (
 
 		if (file?.folderId) {
 			// recursively check the parent folder for permissions
+			console.log( `checking parent folder ${file.folderId} for permissions with the permission from file `, requiredPermission);
 			return await  hasPermission(userId,ResourceType.FOLDER, file.folderId, requiredPermission);
 		}
 	}else if (resourceType === ResourceType.FOLDER) {
@@ -81,6 +86,7 @@ export const hasPermission = async (
 		const acl = await checkFolderWithInheritance(resourceId, resourceType, requiredPermission, userId, groupIds);
 
 		if (acl) {
+			console.log(`permission:${JSON.stringify(acl)} on the folder with the permission`, requiredPermission);
 			return true;
 		}
 
@@ -90,6 +96,7 @@ export const hasPermission = async (
 			select: { parentId: true },
 		});
 		if (folder?.parentId) {
+			console.log(`checking parent folder ${folder.parentId} for permissions with the permission `, requiredPermission);
 			return await hasPermission(userId, ResourceType.FOLDER, folder.parentId, requiredPermission);
 		}
 	}
@@ -101,10 +108,8 @@ export const hasPermission = async (
 const checkPermission = (requiredPermission: Permissions) => {
 	return async (req: Request, res: Response, next: NextFunction) => {
 
-		console.log('Checking permission:', requiredPermission);
 		let resourceType: ResourceType | undefined;
 		// get resource type from query params
-		console.log(req.query.resourceType)
 		const resourceTypeFromQuery = req.query.resourceType as ResourceType;
 
 		if (resourceTypeFromQuery) {
