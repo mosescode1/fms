@@ -254,6 +254,7 @@ class fileService {
 					statusCode: 400 
 				});
 			}
+			
 
 			// Create a map to store created folders by path
 			const folderMap = new Map<string, any>();
@@ -276,7 +277,7 @@ class fileService {
 
 				const pathParts = fullPath.split('/').filter(part => part !== '');
 				let currentPath = '';
-				let currentParentId = parentId;
+				let currentParentId = parentId
 
 				// Create each folder in the path if it doesn't exist
 				for (const part of pathParts) {

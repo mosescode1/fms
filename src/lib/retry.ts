@@ -15,7 +15,7 @@ const DEFAULT_RETRY_OPTIONS: Required<RetryOptions> = {
   maxRetries: 3,
   retryDelay: 300,
   maxDelay: 5000,
-  timeout: 30000
+  timeout: 60 * 60 * 1000, // 1 hour
 };
 
 /**
