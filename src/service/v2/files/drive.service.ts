@@ -154,7 +154,7 @@ class fileService {
 			// Use cache for folder data with a 5-minute TTL
 			const cachedData =  await redisService.get(`folder:${folderId}`);
 			if (cachedData) {
-				return cachedData;
+				return JSON.parse(cachedData);
 			}
 			const folder = await fileRepo.getFolderById(folderId)
 			await redisService.set(`folder:${folderId}`, folder);
@@ -169,7 +169,7 @@ class fileService {
 			// Use cache for file data with a 5-minute TTL
 			const cachedData = await redisService.get(`file:${fileId}`);
 			if (cachedData) {
-				return cachedData;
+				return JSON.parse(cachedData);
 			}
 			const file = await fileRepo.getFileById(fileId);
 			await redisService.set(`file:${fileId}`, file);

@@ -117,6 +117,7 @@ const checkPermission = (requiredPermission: Permissions) => {
 		}
 
 		console.log("here is the resource type", resourceType);
+		console.log("here is the required permission", requiredPermission);
 		if (!resourceType) {
 			return next(
 				new AppError({
@@ -128,7 +129,7 @@ const checkPermission = (requiredPermission: Permissions) => {
 
 		const resourceId = req.params.resourceId as string;
 
-		console.log('Checking permission:', resourceId);
+		console.log('Checking permission for resourceId:', resourceId);
 
 		const user = req.user;
 
@@ -136,10 +137,10 @@ const checkPermission = (requiredPermission: Permissions) => {
 			return next();
 		}
 
-		if (!resourceType || !resourceId) {
+		if (!resourceId) {
 			return next(
 				new AppError({
-					message: 'Missing resource type or resource ID',
+					message: 'Missing resource ID',
 					statusCode: 403,
 				})
 			);

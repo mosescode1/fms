@@ -72,6 +72,7 @@ router.post(
 	catchAsync(fileController.uploadFile)
 );
 
+// upload folder
 router.post(
 	'/upload/folder{/:resourceId}',
 	Authenticate,
