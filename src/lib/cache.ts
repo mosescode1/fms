@@ -45,7 +45,7 @@ class RedisService {
 	 * @returns true if successful, false otherwise
 	 */
 	public async set<T>(key: string, value:string, EX: number = this.TTL) {
-		return await this.redis.set(key, value, 'EX', EX);
+		return await this.redis.set(key, JSON.stringify(value), 'EX', EX);
 	}
 
 
