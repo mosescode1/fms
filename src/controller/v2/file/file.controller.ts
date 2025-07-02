@@ -165,6 +165,9 @@ class FileController{
 
     async getFolderById(req: Request, res: Response){
         const data = await fileServiceInstance.getFolderById(req.params.resourceId);
+        if (!data){
+            throw new AppError({message: "Folder not Found", statusCode: 404})
+        }
         res.status(200).json({
             data
         })
@@ -256,6 +259,7 @@ class FileController{
         }
 
         const file = await fileServiceInstance.getFileById(resourceId);
+        console.log(file)
 
         if (!file) {
             throw new AppError({message: "File not found", statusCode: 404});
