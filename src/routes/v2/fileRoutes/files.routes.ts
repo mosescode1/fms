@@ -90,7 +90,7 @@ router.delete("/file{/:resourceId}", Authenticate, checkRolePermission(roles.ALL
 
 // Permanent deletion and restoration of file
 router.get("/", Authenticate, catchAsync(trashController.getAllTrashedItems));
-router.get("/file/restore{/:resourceId}", Authenticate, checkRolePermission(roles.SUPER_ADMIN), catchAsync(trashController.restoreTrashItem));
+router.put("/file/restore{/:resourceId}", Authenticate, checkRolePermission(roles.SUPER_ADMIN), catchAsync(trashController.restoreTrashItem));
 router.delete("/file/delete{/:resourceId}", Authenticate, checkRolePermission(roles.SUPER_ADMIN), catchAsync(trashController.permanentlyDeleteItem));
 
 export default router;
