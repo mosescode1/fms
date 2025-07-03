@@ -13,10 +13,10 @@ const router = Router();
 // Get all trashed items - Admins see all, regular users see only their own
 router.get("/", Authenticate, catchAsync(trashController.getAllTrashedItems));
 
-// Restore a trashed item - Users can restore their own items, admins can restore any
-router.put("/restore{/:trashId}", Authenticate, catchAsync(trashController.restoreTrashItem));
-
-// Permanently delete a trashed item - Users can delete their own items, admins can delete any
-router.delete("/delete{/:trashId}", Authenticate, catchAsync(trashController.permanentlyDeleteItem));
+// // Restore a trashed item - Users can restore their own items, admins can restore any
+// router.put("/restore{/:trashId}", Authenticate, catchAsync(trashController.restoreTrashItem));
+//
+// // Permanently delete a trashed item - Users can delete their own items, admins can delete any
+// router.delete("/delete{/:trashId}", Authenticate, catchAsync(trashController.permanentlyDeleteItem));
 
 export default router;

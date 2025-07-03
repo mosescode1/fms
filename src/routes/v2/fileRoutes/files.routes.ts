@@ -85,11 +85,12 @@ router.post(
 
 
 // Mark as deletion
-router.delete("/folders{/:folderId}", Authenticate, checkRolePermission(roles.ALL), checkPermission(Permissions.DELETE_FOLDER), catchAsync(fileController.userDeleteFolder));
-router.delete("/file{/:fileId}", Authenticate, checkRolePermission(roles.ALL), checkPermission(Permissions.DELETE_FILE), catchAsync(fileController.userDeleteFile));
+router.delete("/folders{/:resourceId}", Authenticate, checkRolePermission(roles.ALL), checkPermission(Permissions.DELETE_FOLDER), catchAsync(fileController.userDeleteFolder));
+router.delete("/file{/:resourceId}", Authenticate, checkRolePermission(roles.ALL), checkPermission(Permissions.DELETE_FILE), catchAsync(fileController.userDeleteFile));
 
 // Permanent deletion and restoration of file
-router.get("/file/restore{/:fileId}", Authenticate, checkRolePermission(roles.SUPER_ADMIN), catchAsync(trashController.restoreTrashItem));
-router.delete("/file/delete{/:fileId}", Authenticate, checkRolePermission(roles.SUPER_ADMIN), catchAsync(trashController.permanentlyDeleteItem));
+router.get("/", Authenticate, catchAsync(trashController.getAllTrashedItems));
+router.get("/file/restore{/:resourceId}", Authenticate, checkRolePermission(roles.SUPER_ADMIN), catchAsync(trashController.restoreTrashItem));
+router.delete("/file/delete{/:resourceId}", Authenticate, checkRolePermission(roles.SUPER_ADMIN), catchAsync(trashController.permanentlyDeleteItem));
 
 export default router;

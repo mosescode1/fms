@@ -199,7 +199,7 @@ class FileController{
     async userDeleteFolder(req: Request, res: Response){
         const folderPath = req.params.folderPath;
         const accountId = req.user.userId;
-        const folderId = req.params.folderId;
+        const folderId = req.params.resourceId;
 
         // check if the folder exists
         const existingFolder = await fileServiceInstance.getFolderById(folderId);
@@ -276,7 +276,7 @@ class FileController{
     async userDeleteFile(req: Request, res: Response) {
         const filePath = req.params.filePath;
         const accountId = req.user.userId;
-        const fileId = req.params.fileId;
+        const fileId = req.params.resourceId;
 
         // check if the file exists
         const existingFile = await fileServiceInstance.getFileById(fileId);

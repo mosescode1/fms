@@ -28,11 +28,18 @@ class TrashController {
 
 
 	async restoreTrashItem(req: Request, res: Response, next: NextFunction) {
-		const trashId = req.params.trashId; // Fixed parameter name to match route
-		const type = req.body.type;
-		const folderId = req.body.folderId;
-		if (!trashId || !type || !folderId) {
-			return res.status(400).json({error: 'Trash ID and type or folder id are required'});
+		
+	    if (!req.body){
+			return res.status(400).json({error: 'Request body is required'});
+	    }
+	 
+		console.log(req.body, req.params);
+		
+	    const trashId = req.params?.resourceId; // Fixed parameter name to match route
+		const type = req.body?.type;
+		const itemId = req.body?.itemId;
+		if (!trashId || !type || !itemId) {
+			return res.status(400).json({error: 'Trash ID and type or item id are required'});
 		}
 
 		if (type !== "FILE" && type !== "FOLDER") {
@@ -56,7 +63,7 @@ class TrashController {
 
 		const item = {
 			type: type,
-			id: folderId
+			id: itemId
 		}
 		const restoredItem = await trashService.restoreTrashItem(item);
 		if (!restoredItem) {

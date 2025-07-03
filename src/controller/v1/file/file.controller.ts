@@ -146,8 +146,9 @@ class FileController{
         const folder = await fileServiceInstance.userDeleteFolder(folderData);
 
         // add it to the trash folder
-        await trashService.createTrashFolder(folderData);
+       const data = await trashService.createTrashFolder(folderData);
 
+       console.log("data", data)
         // add it to audit log
         const auditLogData = {
             action: "DELETE",
@@ -161,6 +162,7 @@ class FileController{
         res.status(200).json({
             status: "success",
             message: "Folder deleted successfully"
+            
         });
     }
 }
