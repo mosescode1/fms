@@ -66,11 +66,12 @@ router.get(
 router.post(
 	'/upload/file{/:resourceId}',
 	Authenticate,
-	upload.single('file'),
+	upload.array('files'),
 	checkRolePermission(roles.ALL),
 	checkPermission(Permissions.UPLOAD_FILE),
-	catchAsync(fileController.uploadFile)
+	catchAsync(fileController.uploadFiles)
 );
+
 
 // upload folder
 router.post(

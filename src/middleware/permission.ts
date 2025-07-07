@@ -66,8 +66,8 @@ export const hasPermission = async (
 	if( resourceType === ResourceType.FILE) {
 		// File resource: check directly and inherit upward
 		const acl = await checkFileWithInheritance(resourceId, resourceType, requiredPermission, userId, groupIds);
+		
 		if (acl) {
-			console.log(`permission:${JSON.stringify(acl)} on the file with the permission`, requiredPermission);
 			return true;
 		}
 		// Check parent folder if any
@@ -78,7 +78,6 @@ export const hasPermission = async (
 
 		if (file?.folderId) {
 			// recursively check the parent folder for permissions
-			console.log( `checking parent folder ${file.folderId} for permissions with the permission from file `, requiredPermission);
 			return await  hasPermission(userId,ResourceType.FOLDER, file.folderId, requiredPermission);
 		}
 	}else if (resourceType === ResourceType.FOLDER) {
@@ -86,7 +85,6 @@ export const hasPermission = async (
 		const acl = await checkFolderWithInheritance(resourceId, resourceType, requiredPermission, userId, groupIds);
 
 		if (acl) {
-			console.log(`permission:${JSON.stringify(acl)} on the folder with the permission`, requiredPermission);
 			return true;
 		}
 
@@ -96,7 +94,6 @@ export const hasPermission = async (
 			select: { parentId: true },
 		});
 		if (folder?.parentId) {
-			console.log(`checking parent folder ${folder.parentId} for permissions with the permission `, requiredPermission);
 			return await hasPermission(userId, ResourceType.FOLDER, folder.parentId, requiredPermission);
 		}
 	}
@@ -116,8 +113,6 @@ const checkPermission = (requiredPermission: Permissions) => {
 			resourceType = resourceTypeFromQuery;
 		}
 
-		console.log("here is the resource type", resourceType);
-		console.log("here is the required permission", requiredPermission);
 		if (!resourceType) {
 			return next(
 				new AppError({
@@ -128,9 +123,6 @@ const checkPermission = (requiredPermission: Permissions) => {
 		}
 
 		const resourceId = req.params.resourceId as string;
-
-		console.log('Checking permission for resourceId:', resourceId);
-
 		const user = req.user;
 
 		if (user.role === 'SUPER_ADMIN') {
@@ -141,7 +133,7 @@ const checkPermission = (requiredPermission: Permissions) => {
 			return next(
 				new AppError({
 					message: 'Missing resource ID',
-					statusCode: 403,
+					statusCode: 400,
 				})
 			);
 		}
@@ -153,6 +145,7 @@ const checkPermission = (requiredPermission: Permissions) => {
 			requiredPermission
 		);
 
+		console.log(`hasAccess: ${hasAccess}`);
 		if (!hasAccess) {
 			return next(
 				new AppError({

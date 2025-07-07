@@ -43,10 +43,11 @@ class FileController{
 
 
     async uploadFile(req: Request, res: Response){
-        if (!req.file) {
+        if (!req.files || !req.file) {
             return res.status(400).json({ error: 'No file uploaded Missing File to upload' });
         }
 
+        // arrays of
         const { buffer, originalname, mimetype, size, encoding } = req.file;
 
         // TODO: get the remote path from the request body
@@ -70,6 +71,49 @@ class FileController{
             message: 'File uploaded to remote server directly from memory',
             file: data
         });
+    }
+    
+    
+    async uploadFiles(req: Request, res: Response) {
+        if (!req.files || (Array.isArray(req.files) && req.files.length === 0)) {
+            return res.status(400).json({ error: 'No files uploaded. Missing files to upload' });
+        }
+        
+        // Get the remote path from the request body, default to root if not provided
+        const remotePath = req.body.remotePath || '/';
+        
+        // Map through the files and prepare them for upload returning an array of promises
+        const uploadPromises = (req.files as Express.Multer.File[]).map(async (file) => {
+            const { buffer, originalname, mimetype, size, encoding } = file;
+            
+            const fileData = {
+                name: originalname,
+                mimetype,
+                size,
+                encoding,
+                folderId: req.params.resourceId,
+                remotePath,
+                localSource: buffer,
+                userId: req.user.userId,
+            };
+            
+            return fileServiceInstance.uploadFile(fileData);
+        });
+        
+        try {
+            // Wait for all uploads to complete
+            const uploadedFiles = await Promise.all(uploadPromises);
+            
+            res.status(200).json({
+                message: 'Files uploaded to remote server directly from memory',
+                files: uploadedFiles
+            });
+        } catch (error:any) {
+            res.status(500).json({
+                error: 'Failed to upload one or more files',
+                details: error.message
+            });
+        }
     }
 
     async uploadFolder(req: Request, res: Response){
