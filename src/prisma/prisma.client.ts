@@ -4,7 +4,12 @@ import {withAccelerate} from "@prisma/extension-accelerate"
 
 
 const prisma = new PrismaClient({
-    log: ['query', 'info', 'warn', 'error'],
+    log: ['info', 'warn', 'error'],
+    omit:{
+        account:{
+            password: true,
+        }
+    }
 }).$extends(withAccelerate())
 
 export {

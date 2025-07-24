@@ -1,0 +1,11 @@
+const SUPER_ADMIN = ['SUPER_ADMIN'];
+const SUPER_AND_ADMIN = ['SUPER_ADMIN', 'ADMIN'];
+const MEMBERS = ['MEMBER'];
+const ALL = ['SUPER_ADMIN', 'ADMIN', 'MEMBER'];
+
+export default {
+	SUPER_ADMIN,
+	SUPER_AND_ADMIN,
+	MEMBERS,
+	ALL,
+};

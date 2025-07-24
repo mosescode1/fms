@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
   output   = "../node_modules/.prisma/client"
@@ -14,89 +8,240 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Users {
-  id          String       @id @default(uuid())
-  fullName    String       @db.VarChar(255)
-  email       String       @unique @db.VarChar(255)
-  phoneNumber String       @db.VarChar(255)
-  password    String       @db.VarChar(255)
-  loggedInAs  Role         @default(USER)
-  parentId    String? // Self-reference
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  folders     Folders[]
-  files       Files[]
-  auditLog    AuditLog[]
-  permission  Permission[]
+// ===================
+// Base User Model
+// ===================
+model Account {
+  id          String   @id @default(uuid())
+  fullName    String   @db.VarChar(255)
+  email       String   @unique @db.VarChar(255)
+  phoneNumber String?  @db.VarChar(255)
+  password    String   @db.VarChar(255)
+  role        Role     @default(SUPER_ADMIN) // Changed default to MEMBER for least privilege
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  files            File[]
+  folders          Folder[]
+  auditLogs        AuditLog[]
+  trash            Trash[]
+  groupMemberships GroupMember[]
+  userACLs         AclEntry[]
+
+  @@index([email], name: "account_email_idx") // Index for faster lookups
 }
 
 enum Role {
-  USER
+  SUPER_ADMIN
   ADMIN
+  MEMBER
 }
 
-model Folders {
-  id        String     @id @default(uuid())
-  name      String
-  fullPath  String? // Path to the folder
-  parentId  String? // Self-reference
-  parent    Folders?   @relation("FolderToSubfolders", fields: [parentId], references: [id], onDelete: Cascade)
-  children  Folders[]  @relation("FolderToSubfolders") // Subfolders for self-referencing
-  files     Files[] // Files in this folder
-  usersId   String
-  user      Users      @relation(fields: [usersId], references: [id])
+// ===================
+// Folder Model
+// ===================
+model Folder {
+  id       String   @id
+  name     String   @db.VarChar(255)
+  type     String   @default("folder")
+  fullPath String?  @db.VarChar(1024) // Increased length for deep paths
+  parentId String?
+  parent   Folder?  @relation("FolderHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children Folder[] @relation("FolderHierarchy")
+  metadata Json? // Added for custom properties
+
+  files     File[]
+  accountId String?
+  owner     Account?   @relation(fields: [accountId], references: [id])
+  auditLogs AuditLog[]
+  deleted   Boolean    @default(false)
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
-  AuditLog  AuditLog[]
+  trash     Trash[]
+  AclEntry  AclEntry[]
+
+  @@index([parentId], name: "folder_parentId_idx") // Index for hierarchy queries
+  @@index([fullPath], name: "folder_fullPath_idx") // Index for path-based lookups
 }
 
-model Files {
-  id         String     @id @default(uuid())
-  fileName   String     @db.VarChar(255)
-  fileType   String     @db.VarChar(255)
-  fileSize   Int
-  filePath   String     @db.VarChar(255)
-  encoding   String     @db.VarChar(255)
-  Folder     Folders?   @relation(fields: [folderId], references: [id])
-  folderId   String?
-  Users      Users      @relation(fields: [usersId], references: [id])
-  usersId    String
-  AuditLog   AuditLog[]
+// ===================
+// File Model
+// ===================
+model File {
+  id             String  @id
+  fileName       String  @db.VarChar(255)
+  fileType       String  @db.VarChar(255)
+  fileSize       Int     @default(0) @db.Integer // Non-negative constraint
+  filePath       String  @db.VarChar(1024) // Increased length for deep paths
+  encoding       String  @db.VarChar(255)
+  deleted        Boolean @default(false)
+  webContentLink String  @db.VarChar(255)
+  webViewLink    String  @db.VarChar(255)
+  version        Int     @default(1) // Added for versioning
+  metadata       Json? // Added for custom properties
+
+  folderId String?
+  folder   Folder? @relation(fields: [folderId], references: [id], onDelete: Cascade) // Cascade deletion
+
+  accountId String?
+  owner     Account? @relation(fields: [accountId], references: [id])
+
+  auditLogs  AuditLog[]
   uploadedAt DateTime   @default(now())
   updatedAt  DateTime   @updatedAt
+  trash      Trash[]
+  acls       AclEntry[]
+
+  @@index([folderId], name: "file_folderId_idx") // Index for folder-file queries
 }
 
-model Permission {
-  id             String           @id @default(uuid())
-  permissionType PermissionType[]
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
-  Users          Users?           @relation(fields: [usersId], references: [id])
-  usersId        String?
+// ===================
+// Trash Model
+// ===================
+model Trash {
+  id                 String        @id @default(uuid())
+  accountId          String
+  folderId           String?
+  fileId             String?
+  deletedAt          DateTime      @default(now())
+  originalPath       String?       @db.VarChar(1024)
+  itemType           TrashItemType // Changed to enum for validation
+  retentionExpiresAt DateTime? // Added for retention policy
+
+  deletedBy Account @relation(fields: [accountId], references: [id])
+  folder    Folder? @relation(fields: [folderId], references: [id])
+  file      File?   @relation(fields: [fileId], references: [id])
 }
 
-enum PermissionType {
-  READ
-  WRITE
-  DELETE
+enum TrashItemType {
+  FOLDER
+  FILE
 }
 
+// ===================
+// Audit Log
+// ===================
+model AuditLog {
+  id         String       @id @default(uuid())
+  action     Action
+  targetId   String
+  targetType ResourceType
+  actorId    String
+  actor      Account      @relation(fields: [actorId], references: [id])
+  ipAddress  String?      @db.VarChar(45) // IPv6 support
+  userAgent  String?      @db.VarChar(255)
+  outcome    String? // Added to track success/failure (e.g., "SUCCESS", "FAILURE")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  folderId  String?
+  fileId    String?
+  folder    Folder?  @relation(fields: [folderId], references: [id])
+  file      File?    @relation(fields: [fileId], references: [id])
+
+  @@index([actorId], name: "audit_actorId_idx") // Index for actor-based queries
+}
+
+// Extended actions for better audit coverage
 enum Action {
   CREATE
   READ
+  UPLOAD_FILE
+  UPLOAD_FOLDER
   UPDATE
   DELETE
+  RESTORE
+  MOVE
+  COPY
+  SHARE
 }
 
-model AuditLog {
-  id        String   @id @default(uuid())
-  action    Action
-  fileId    String?
-  file      Files?   @relation(fields: [fileId], references: [id])
-  folderId  String?
-  folder    Folders? @relation(fields: [folderId], references: [id])
-  usersId   String
-  users     Users    @relation(fields: [usersId], references: [id])
+enum ResourceType {
+  FOLDER
+  FILE
+}
+
+// ===================
+// Access Control
+// ===================
+model AclEntry {
+  id           String        @id @default(uuid())
+  resourceType ResourceType
+  permissions  Permissions[]
+  inherited    Boolean       @default(false)
+
+  folderId String? // Optional field for Folder reference
+  fileId   String? // Optional field for File reference
+
+  file File? @relation(fields: [fileId], references: [id], onDelete: Cascade)
+
+  accountId String?
+  groupId   String?
+
+  account       Account?       @relation(fields: [accountId], references: [id])
+  securityGroup SecurityGroup? @relation(fields: [groupId], references: [id])
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  Folder    Folder?  @relation(fields: [folderId], references: [id])
+
+  @@index([folderId], name: "acl_folderId_idx")
+  @@index([fileId], name: "acl_fileId_idx")
+}
+
+// ===================
+// Security Group Models
+// ===================
+model SecurityGroup {
+  id          String        @id @default(uuid())
+  name        String        @unique @db.VarChar(255)
+  description String?       @db.VarChar(255)
+  members     GroupMember[]
+  acls        AclEntry[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model GroupMember {
+  id        String   @id @default(uuid())
+  groupId   String
+  accountId String
+  joinedAt  DateTime @default(now())
+
+  group   SecurityGroup @relation(fields: [groupId], references: [id])
+  account Account       @relation(fields: [accountId], references: [id])
+
+  @@index([groupId, accountId], name: "group_member_idx") // Index for membership queries
+}
+
+// Consolidated permissions with comments
+enum Permissions {
+  // General permissions
+  FULL_ACCESS // Implies all permissions below
+
+  // File-specific
+  OPEN_FILE // Open a file
+  DELETE_FILE // Remove a file
+  UPLOAD_FILE // Upload a new file
+  RENAME_FILE // Change file name
+  DOWNLOAD_FILE // Download a file
+  MOVE_FILE // Move a file to another folder
+  COPY_FILE // Copy a file to another location
+  SHARE_FILE // Share a file with others
+
+  // Folder-specific
+  CREATE_FOLDER // Create a new folder
+  OPEN_FOLDER // View folder contents
+  RENAME_FOLDER // Change folder name
+  MOVE_FOLDER // Move a folder to another location
+  COPY_FOLDER // Copy a folder to another location
+  UPLOAD_FOLDER // Upload a new folder
+  DELETE_FOLDER // Remove a folder
+  SHARE_FOLDER // Share a folder with others
+
+  // Administrative
+  // MANAGE_PERMISSIONS // Modify ACLs
+  // MANAGE_USERS // Add/remove users
+  // MANAGE_ROLES // Assign roles
 }

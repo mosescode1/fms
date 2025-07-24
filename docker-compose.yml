@@ -1,7 +1,7 @@
 services:
   postgres:
     image: postgres:alpine
-    container_name: postgres
+    container_name: postgresgemz
     restart: always
     shm_size: 256mb
     environment:
@@ -20,15 +20,31 @@ services:
     networks:
       - gemz-network
 
+  redis:
+    image: redis:alpine
+    container_name: gemz_redis
+    restart: always
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - gemz-network
+
   app:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: gemz-app
     ports:
-      - "3000:3000"
+      - "3000:3002"
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     networks:
       - gemz-network

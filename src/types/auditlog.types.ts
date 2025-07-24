@@ -1,7 +1,9 @@
 export type AuditLogData = {
     action: string;
-    usersId: string;
-    fileId?: string | null;
+    actorId: string | null;
+    targetId: string;
+    targetType: string;
     folderId?: string | null;
+    fileId?: string | null;
 }
 

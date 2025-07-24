@@ -4,7 +4,8 @@ declare global {
         interface Request {
             user: {
                 userId: string;
-                loggedInAs: string;
+                role: string;
+                permissionLevel?: string[];
             };
         }
     }
