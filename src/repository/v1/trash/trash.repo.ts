@@ -105,6 +105,64 @@ class TrashRepo{
 			throw new Error(error.message);
 		}
 	}
+
+	async getTrashAnalysis() {
+		try{
+			const totalItems = await prisma.trash.count();
+			const totalFolders = await prisma.trash.findMany({
+				where: { itemType: "FOLDER" }
+			});
+			const totalFiles = await prisma.trash.count({
+				where: { itemType: "FILE" }
+			});
+
+			//map through the folder to get the file inside and count the size
+			const totalFoldersWithFiles = totalFolders.map((folder) => {
+				return  prisma.folder.findUnique({
+					where: { id: folder.folderId as string },
+					include: { files: true }
+				}).then(folderData => {
+					return {
+						totalSize: folderData?.files.reduce((acc, file) => acc + file.fileSize, 0)
+					};
+				})
+			});
+
+			const totalFilesSize = await Promise.all(totalFoldersWithFiles);
+			const totalSize = totalFilesSize.reduce((acc, folder) => acc + (folder.totalSize || 0), 0);
+
+			// add the total size of files in the trash
+			const totalFilesInTrash = await prisma.file.findMany({
+				where: { deleted: true },
+				select: { fileSize: true }
+			});
+
+			const totalFilesSizeInTrash = totalFilesInTrash.reduce((acc, file) => acc + file.fileSize, 0);
+			const totalSizeInTrash = totalSize + totalFilesSizeInTrash;
+
+
+			return {
+				totalItems,
+				freedSpace: totalSizeInTrash,
+			};
+
+		}catch (error:any) {
+			throw new Error(error.message);
+		}
+	}
+
+
+	async deletedFiles(){
+		try {
+			return await prisma.trash.findMany({
+				include:{
+					deletedBy: true,
+				}
+			});
+		} catch (error:any) {
+			throw new Error(error.message);
+		}
+	}
 }
 
 

@@ -38,8 +38,16 @@ class TrashController {
 	    const trashId = req.params?.resourceId; // Fixed parameter name to match route
 		const type = req.body?.type;
 		const itemId = req.body?.itemId;
-		if (!trashId || !type || !itemId) {
-			return res.status(400).json({error: 'Trash ID and type or item id are required'});
+		if (!trashId){
+			return res.status(400).json({error: 'Trash ID is required'});
+		}
+
+		if (!type) {
+			return res.status(400).json({error: 'Type is required'});
+		}
+
+		if (!itemId) {
+			return res.status(400).json({error: 'Item ID is required'});
 		}
 
 		if (type !== "FILE" && type !== "FOLDER") {
@@ -52,14 +60,6 @@ class TrashController {
 			return res.status(404).json({error: 'Item not found in trash'});
 		}
 
-		// Check if user has permission to restore this item
-		// Allow if user is admin or if they own the item
-		if (req.user.role !== 'SUPER_ADMIN' && req.user.role !== 'ADMIN' && itemInTrash.accountId !== req.user.userId) {
-			return res.status(403).json({
-				status: "error",
-				message: "You do not have permission to restore this item"
-			});
-		}
 
 		const item = {
 			type: type,
@@ -159,6 +159,30 @@ class TrashController {
 		});
 	}
 
+	async getTrashAnalysis(req: Request, res: Response, next: NextFunction) {
+		try {
+			const analysis = await trashService.getTrashAnalysis();
+			res.status(200).json({
+				status: "success",
+				data: analysis
+			});
+		} catch (error) {
+			next(error); // Pass error to the global error handler
+		}
+
+	}
+
+	async deletedFiles(req: Request, res: Response, next: NextFunction) {
+	 		try {
+			const deletedFiles = await trashService.deletedFiles();
+			res.status(200).json({
+				status: "success",
+				data: deletedFiles
+			});
+		} catch (error) {
+			next(error); // Pass error to the global error handler
+		}
+	}
 }
 const trashController = new TrashController()
 export default  trashController;

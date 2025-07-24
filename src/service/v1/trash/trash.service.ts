@@ -58,6 +58,24 @@ class TrashService{
 			throw new Error(error.message);
 		}
 	}
+
+	async getTrashAnalysis() {
+		try {
+			return await trashRepo.getTrashAnalysis();
+		}catch (error: any) {
+			console.error("Error getting trash analysis", error);
+			throw new Error(error.message);
+		}
+	}
+
+	async deletedFiles(){
+		try {
+			return await trashRepo.deletedFiles();
+		}catch (error: any) {
+			console.error("Error getting deleted files", error);
+			throw new Error(error.message);
+		}
+	}
 }
 
 

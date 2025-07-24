@@ -11,12 +11,14 @@ const { SUPER_AND_ADMIN, ALL } = roles;
 const router = Router();
 
 // Get all trashed items - Admins see all, regular users see only their own
-router.get("/", Authenticate, catchAsync(trashController.getAllTrashedItems));
+// router.get("/", Authenticate, catchAsync(trashController.getAllTrashedItems));
+router.get("/", Authenticate,checkRolePermission(["SUPER_ADMIN"]), catchAsync(trashController.deletedFiles));
+router.get('/analysis', Authenticate, checkRolePermission(["SUPER_ADMIN"]), catchAsync(trashController.getTrashAnalysis));
 
 // // Restore a trashed item - Users can restore their own items, admins can restore any
-// router.put("/restore{/:trashId}", Authenticate, catchAsync(trashController.restoreTrashItem));
+router.put("/restore{/:resourceId}", Authenticate,checkRolePermission(["SUPER_ADMIN"]), catchAsync(trashController.restoreTrashItem));
 //
 // // Permanently delete a trashed item - Users can delete their own items, admins can delete any
-// router.delete("/delete{/:trashId}", Authenticate, catchAsync(trashController.permanentlyDeleteItem));
+router.delete("/delete{/:resourceId}", Authenticate, checkRolePermission(["SUPER_ADMIN"]), catchAsync(trashController.permanentlyDeleteItem));
 
 export default router;
