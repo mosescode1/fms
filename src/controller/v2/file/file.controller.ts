@@ -180,7 +180,95 @@ class FileController{
             });
         }
     }
-
+    
+    async  uploadFolders(req: Request, res: Response) {
+        // Check if files are uploaded
+        if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
+            return res.status(400).json({
+                error: 'No files uploaded',
+                details: 'Please provide files under the "files" field in multipart/form-data'
+            });
+        }
+        
+        // Check if folderStructure is provided
+        if (!req.body.folderStructure) {
+            return res.status(400).json({
+                error: 'Folder structure information is required',
+                example: {
+                    'file1.txt': { path: '/folder1', name: 'file1.txt' },
+                    'folder1/file2.txt': { path: '/folder1', name: 'file2.txt' },
+                    'folder1/subfolder/file3.txt': { path: '/folder1/subfolder', name: 'file3.txt' }
+                }
+            });
+        }
+        
+        // Parse folderStructure
+        let folderStructure: { [key: string]: { path: string; name: string } };
+        try {
+            folderStructure = JSON.parse(req.body.folderStructure);
+        } catch (error) {
+            return res.status(400).json({
+                error: 'Invalid folder structure format. Must be a valid JSON string.',
+                example: {
+                    'file1.txt': { path: '/folder1', name: 'file1.txt' },
+                    'folder1/file2.txt': { path: '/folder1', name: 'file2.txt' },
+                    'folder1/subfolder/file3.txt': { path: '/folder1/subfolder', name: 'file3.txt' }
+                }
+            });
+        }
+        
+        // Validate folder structure format
+        if (typeof folderStructure !== 'object' || folderStructure === null) {
+            return res.status(400).json({
+                error: 'Folder structure must be an object mapping file paths to their metadata',
+                example: {
+                    'file1.txt': { path: '/folder1', name: 'file1.txt' },
+                    'folder1/file2.txt': { path: '/folder1', name: 'file2.txt' },
+                    'folder1/subfolder/file3.txt': { path: '/folder1/subfolder', name: 'file3.txt' }
+                }
+            });
+        }
+        
+        // Validate that all uploaded files have corresponding folderStructure entries
+        const fileNames = (req.files as Express.Multer.File[]).map(file => file.originalname);
+        const structureKeys = Object.keys(folderStructure);
+        const missingFiles = fileNames.filter(name => !structureKeys.some(key => key === name || folderStructure[key].name === name));
+        const extraStructureFiles = structureKeys.filter(key => !fileNames.includes(key) && !fileNames.includes(folderStructure[key].name));
+        
+        if (missingFiles.length > 0 || extraStructureFiles.length > 0) {
+            return res.status(400).json({
+                error: 'Mismatch between uploaded files and folder structure',
+                details: {
+                    missingFiles: missingFiles.length > 0 ? missingFiles : undefined,
+                    extraStructureFiles: extraStructureFiles.length > 0 ? extraStructureFiles : undefined
+                }
+            });
+        }
+        
+        const parentId = req.params.resourceId;
+        const userId = req.user.userId;
+        
+        // Process the folder structure and files
+        try {
+            const result = await fileServiceInstance.uploadFolder({
+                files: req.files as Express.Multer.File[], // Pass raw Multer files
+                folderStructure,
+                parentId,
+                userId
+            });
+            
+            res.status(200).json({
+                message: `Successfully uploaded ${result.files.length} file(s) in folder structure`,
+                data: result
+            });
+        } catch (error: any) {
+            res.status(error.statusCode || 500).json({
+                error: error.message || 'Failed to upload folder',
+                details: error.message
+            });
+        }
+    }
+    
     async allFiles(req: Request, res: Response){
         const { page, limit, skip } = getPaginationParams(req);
         const { files, total } = await fileServiceInstance.allFiles(skip, limit);
@@ -217,28 +305,28 @@ class FileController{
         })
     }
 
-    async getRootFolderPermissionLevel(req: Request, res: Response){
-        const folderPath = req.user.permissionLevel ?? [];
-        if (!req.user.permissionLevel) {
-            throw new AppError({ message: 'Permission level not set on user', statusCode: 404 });
-        }
-
-        const folders = await fileServiceInstance.getRootFolderPermissionLevel(folderPath);
-
-        if (!folders) {
-            throw new AppError({ message: 'No folders found for the given path', statusCode: 404 });
-        }
-
-        // remove null values from the folders array
-        const filteredFolders = folders.filter(folder => folder !== null);
-
-        res.status(200).json({
-            status: "success",
-            data:{
-                folders: filteredFolders
-            }
-        })
-    }
+    // async getRootFolderPermissionLevel(req: Request, res: Response){
+    //     const folderPath = req.user.permissionLevel ?? [];
+    //     if (!req.user.permissionLevel) {
+    //         throw new AppError({ message: 'Permission level not set on user', statusCode: 404 });
+    //     }
+    //
+    //     const folders = await fileServiceInstance.getRootFolderPermissionLevel(folderPath);
+    //
+    //     if (!folders) {
+    //         throw new AppError({ message: 'No folders found for the given path', statusCode: 404 });
+    //     }
+    //
+    //     // remove null values from the folders array
+    //     const filteredFolders = folders.filter(folder => folder !== null);
+    //
+    //     res.status(200).json({
+    //         status: "success",
+    //         data:{
+    //             folders: filteredFolders
+    //         }
+    //     })
+    // }
 
     async userDeleteFolder(req: Request, res: Response){
         const folderPath = req.params.folderPath;

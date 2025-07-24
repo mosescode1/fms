@@ -110,7 +110,34 @@ class UserRepository {
 
 
     async getAllUsers() {
-        return await prisma.account.findMany({})
+        return  prisma.account.findMany({})
+    }
+
+	async getTotalUsers() {
+		return  prisma.account.count();
+	}
+
+    async getFiles() {
+        return prisma.file.findMany({
+            select: {
+                id: true,
+                fileName: true,
+                fileSize: true,
+            },
+        });
+    }
+
+    async getMemberFiles(userId: any) {
+        return prisma.file.findMany({
+            where: {
+                accountId: userId,
+            },
+            select: {
+                id: true,
+                fileName: true,
+                fileSize: true,
+            },
+        })
     }
 }
 

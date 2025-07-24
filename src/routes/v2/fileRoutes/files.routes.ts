@@ -80,7 +80,7 @@ router.post(
 	upload.array('files'),
 	checkRolePermission(roles.ALL),
 	checkPermission(Permissions.UPLOAD_FOLDER),
-	catchAsync(fileController.uploadFolder)
+	catchAsync(fileController.uploadFolders)
 );
 
 

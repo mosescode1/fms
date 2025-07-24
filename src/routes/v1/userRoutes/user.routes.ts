@@ -6,8 +6,6 @@ import { catchAsync } from '../../../lib';
 const router = Router();
 
 const superAdmin = ['SUPER_ADMIN'];
-const superAdminAndAdmin = ['SUPER_ADMIN', 'ADMIN'];
-const adminOnly = ['ADMIN'];
 const allRoles = ['SUPER_ADMIN', 'ADMIN', 'USER'];
 
 // get all users
@@ -34,11 +32,29 @@ router.post(
 	catchAsync(userController.giveUserPermissions)
 );
 
+// profile
 router.get(
 	'/me',
 	Authenticate,
 	checkRolePermission(allRoles),
 	userController.userProfile
 );
+
+
+// admin dashboard
+router.get(
+	'/admin/dashboard',
+	Authenticate,
+	checkRolePermission(superAdmin),
+	catchAsync(userController.adminDashboard)
+);
+
+
+router.get(
+	'/member/dashboard',
+	Authenticate,
+	checkRolePermission(['ADMIN', 'USER']),
+	catchAsync(userController.memberDashboard)
+)
 
 export default router;

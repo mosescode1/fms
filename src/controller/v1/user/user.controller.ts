@@ -196,6 +196,45 @@ class UserController {
 			}
 		}
 	}
+
+	async adminDashboard(req:any, res: any) {
+		try {
+			// fetch the total number of users
+			const totalUsers = await userService.getTotalUsers();
+			// fetch the total number of files and size
+			const totalFiles = await userService.getTotalFiles();
+
+			res.status(200).json({
+				status: 'success',
+				data: {
+					totalUsers,
+					totalFiles
+				}
+			});
+		} catch (error: any) {
+			throw new AppError({ message: error.message, statusCode: 500 });
+		}
+
+	}
+
+	async memberDashboard(req:any, res: any) {
+		try{
+			// fetch the total number of files and size
+			const userId = req.user.userId;
+			const {totalFiles, fileTypes, totalSize} = await userService.getTotalMemberFiles(userId);
+
+			res.status(200).json({
+				status: 'success',
+				data: {
+					totalFiles,
+					fileTypes,
+					totalSize
+				}
+			});
+		}catch(error: any) {
+			throw new AppError({ message: error.message, statusCode: 500 });
+		}
+	}
 }
 
 const userControllerInstance = new UserController();
