@@ -190,6 +190,182 @@ class fileRepository {
         }
     }
 
+    async moveFile(fileData: any): Promise<any> {
+        const { id, newFolderId } = fileData;
+
+        try {
+            // Get the file to move
+            const file = await prisma.file.findUnique({
+                where: { id, deleted: false },
+            });
+
+            if (!file) {
+                throw new Error("File not found");
+            }
+
+            // Update the file's folder ID
+            const updatedFile = await prisma.file.update({
+                where: { id },
+                data: {
+                    folderId: newFolderId,
+                },
+            });
+
+            // Update the file path
+            const fullPath = this.rootPath + await this.buildFileFullPath(file.id);
+            return await prisma.file.update({
+                where: { id },
+                data: {
+                    filePath: fullPath,
+                },
+            });
+        } catch (err) {
+            throw new Error("Failed to move file");
+        }
+    }
+
+    async renameFile(fileData: any): Promise<any> {
+        const { id, newFileName } = fileData;
+
+        try {
+            // Get the file to rename
+            const file = await prisma.file.findUnique({
+                where: { id, deleted: false },
+            });
+
+            if (!file) {
+                throw new Error("File not found");
+            }
+
+            // Update the file's name
+            const updatedFile = await prisma.file.update({
+                where: { id },
+                data: {
+                    fileName: newFileName,
+                },
+            });
+
+            // Update the file path
+            const fullPath = this.rootPath + await this.buildFileFullPath(file.id);
+            return await prisma.file.update({
+                where: { id },
+                data: {
+                    filePath: fullPath,
+                },
+            });
+        } catch (err) {
+            throw new Error("Failed to rename file");
+        }
+    }
+
+    async copyFile(fileData: any): Promise<any> {
+        const { id, targetFolderId, newId, userId } = fileData;
+
+        try {
+            // Get the source file
+            const sourceFile = await prisma.file.findUnique({
+                where: { id, deleted: false },
+            });
+
+            if (!sourceFile) {
+                throw new Error("Source file not found");
+            }
+
+            // Create a new file record
+            const newFile = await prisma.file.create({
+                data: {
+                    id: newId,
+                    fileName: sourceFile.fileName,
+                    fileType: sourceFile.fileType,
+                    fileSize: sourceFile.fileSize,
+                    filePath: "", // temporary path
+                    encoding: sourceFile.encoding,
+                    accountId: userId || sourceFile.accountId,
+                    folderId: targetFolderId,
+                    webContentLink: sourceFile.webContentLink,
+                    webViewLink: sourceFile.webViewLink,
+                    metadata: JSON.stringify(sourceFile.metadata),
+                },
+            });
+
+            // Update the file path
+            const fullPath = this.rootPath + await this.buildFileFullPath(newFile.id);
+            return await prisma.file.update({
+                where: { id: newFile.id },
+                data: {
+                    filePath: fullPath,
+                },
+            });
+        } catch (err) {
+            throw new Error("Failed to copy file");
+        }
+    }
+
+    async copyFolder(folderData: any): Promise<any> {
+        const { id, targetParentId, newId, userId, newName } = folderData;
+
+        try {
+            // Get the source folder
+            const sourceFolder = await prisma.folder.findUnique({
+                where: { id, deleted: false },
+                include: {
+                    files: { where: { deleted: false } },
+                    children: { where: { deleted: false } }
+                },
+            });
+
+            if (!sourceFolder) {
+                throw new Error("Source folder not found");
+            }
+
+            // Create a new folder record
+            const newFolder = await prisma.folder.create({
+                data: {
+                    id: newId,
+                    name: newName || sourceFolder.name,
+                    type: sourceFolder.type,
+                    parentId: targetParentId,
+                    accountId: userId || sourceFolder.accountId,
+                    metadata: JSON.stringify(sourceFolder.metadata),
+                    fullPath: "", // temporary path
+                },
+            });
+
+            // Update the folder path
+            const fullPath = this.rootPath + await this.buildFullPath(newFolder.id);
+            const updatedFolder = await prisma.folder.update({
+                where: { id: newFolder.id },
+                data: {
+                    fullPath: fullPath,
+                },
+            });
+
+            // Copy all files in the folder
+            for (const file of sourceFolder.files) {
+                await this.copyFile({
+                    id: file.id,
+                    targetFolderId: newFolder.id,
+                    newId: `${file.id}_copy_${Date.now()}`,
+                    userId: userId || file.accountId,
+                });
+            }
+
+            // Recursively copy all subfolders
+            for (const childFolder of sourceFolder.children) {
+                await this.copyFolder({
+                    id: childFolder.id,
+                    targetParentId: newFolder.id,
+                    newId: `${childFolder.id}_copy_${Date.now()}`,
+                    userId: userId || childFolder.accountId,
+                });
+            }
+
+            return updatedFolder;
+        } catch (err) {
+            throw new Error("Failed to copy folder");
+        }
+    }
+
     async allFiles(skip?: number, limit?: number): Promise<{ files: any[], total: number }> {
         try {
             const [files, total] = await Promise.all([

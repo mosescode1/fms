@@ -85,6 +85,18 @@ router.post(
 
 
 
+// Move files and folders
+router.post("/move/file{/:resourceId}", Authenticate, checkRolePermission(roles.ALL), checkPermission(Permissions.MOVE_FILE), catchAsync(fileController.moveFile));
+router.post("/move/folder{/:resourceId}", Authenticate, checkRolePermission(roles.ALL), checkPermission(Permissions.MOVE_FOLDER), catchAsync(fileController.moveFolder));
+
+// Copy files and folders
+router.post("/copy/file{/:resourceId}", Authenticate, checkRolePermission(roles.ALL), checkPermission(Permissions.COPY_FILE), catchAsync(fileController.copyFile));
+router.post("/copy/folder{/:resourceId}", Authenticate, checkRolePermission(roles.ALL), checkPermission(Permissions.COPY_FOLDER), catchAsync(fileController.copyFolder));
+
+// Rename files and folders
+router.post("/rename/file{/:resourceId}", Authenticate, checkRolePermission(roles.ALL), checkPermission(Permissions.RENAME_FILE), catchAsync(fileController.renameFile));
+router.post("/rename/folder{/:resourceId}", Authenticate, checkRolePermission(roles.ALL), checkPermission(Permissions.RENAME_FOLDER), catchAsync(fileController.renameFolder));
+
 // Mark as deletion
 router.delete("/folders{/:resourceId}", Authenticate, checkRolePermission(roles.ALL), checkPermission(Permissions.DELETE_FOLDER), catchAsync(fileController.userDeleteFolder));
 router.delete("/file{/:resourceId}", Authenticate, checkRolePermission(roles.ALL), checkPermission(Permissions.DELETE_FILE), catchAsync(fileController.userDeleteFile));

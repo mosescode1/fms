@@ -11,6 +11,7 @@ process.on("exit", (code) => {
 
 process.on("uncaughtException", (err: Error) => {
     console.error(`Received uncaught exception at: ${err}`)
+    console.error(err.stack)
     process.exit(1)
 })
 

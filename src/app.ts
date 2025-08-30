@@ -11,7 +11,7 @@ import { AppError } from './lib';
 import userRoutes from './routes/v1/userRoutes/user.routes';
 import securityRoutes from './routes/v1/securitygroup/securityGroup.routes';
 // import organizationRoutes from "./routes/v1/organizationRoutes/organization.routes";
-// import filesRoutes from "./routes/v1/filesRoutes/files.routes";
+import filesRoutes from "./routes/v1/filesRoutes/files.routes";
 import permissionRoutes from "./routes/v1/permissionRoutes/permission.routes"
 import auditLogRoutes from "./routes/v1/auditLog/audit.log";
 import trashRoutes from './routes/v1/trashRoutes/trash.routes';

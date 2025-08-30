@@ -72,20 +72,20 @@ class FileController{
             file: data
         });
     }
-    
-    
+
+
     async uploadFiles(req: Request, res: Response) {
         if (!req.files || (Array.isArray(req.files) && req.files.length === 0)) {
             return res.status(400).json({ error: 'No files uploaded. Missing files to upload' });
         }
-        
+
         // Get the remote path from the request body, default to root if not provided
         const remotePath = req.body.remotePath || '/';
-        
+
         // Map through the files and prepare them for upload returning an array of promises
         const uploadPromises = (req.files as Express.Multer.File[]).map(async (file) => {
             const { buffer, originalname, mimetype, size, encoding } = file;
-            
+
             const fileData = {
                 name: originalname,
                 mimetype,
@@ -96,14 +96,14 @@ class FileController{
                 localSource: buffer,
                 userId: req.user.userId,
             };
-            
+
             return fileServiceInstance.uploadFile(fileData);
         });
-        
+
         try {
             // Wait for all uploads to complete
             const uploadedFiles = await Promise.all(uploadPromises);
-            
+
             res.status(200).json({
                 message: 'Files uploaded to remote server directly from memory',
                 files: uploadedFiles
@@ -180,7 +180,7 @@ class FileController{
             });
         }
     }
-    
+
     async  uploadFolders(req: Request, res: Response) {
         // Check if files are uploaded
         if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
@@ -189,7 +189,7 @@ class FileController{
                 details: 'Please provide files under the "files" field in multipart/form-data'
             });
         }
-        
+
         // Check if folderStructure is provided
         if (!req.body.folderStructure) {
             return res.status(400).json({
@@ -201,7 +201,7 @@ class FileController{
                 }
             });
         }
-        
+
         // Parse folderStructure
         let folderStructure: { [key: string]: { path: string; name: string } };
         try {
@@ -216,7 +216,7 @@ class FileController{
                 }
             });
         }
-        
+
         // Validate folder structure format
         if (typeof folderStructure !== 'object' || folderStructure === null) {
             return res.status(400).json({
@@ -228,13 +228,13 @@ class FileController{
                 }
             });
         }
-        
+
         // Validate that all uploaded files have corresponding folderStructure entries
         const fileNames = (req.files as Express.Multer.File[]).map(file => file.originalname);
         const structureKeys = Object.keys(folderStructure);
         const missingFiles = fileNames.filter(name => !structureKeys.some(key => key === name || folderStructure[key].name === name));
         const extraStructureFiles = structureKeys.filter(key => !fileNames.includes(key) && !fileNames.includes(folderStructure[key].name));
-        
+
         if (missingFiles.length > 0 || extraStructureFiles.length > 0) {
             return res.status(400).json({
                 error: 'Mismatch between uploaded files and folder structure',
@@ -244,10 +244,10 @@ class FileController{
                 }
             });
         }
-        
+
         const parentId = req.params.resourceId;
         const userId = req.user.userId;
-        
+
         // Process the folder structure and files
         try {
             const result = await fileServiceInstance.uploadFolder({
@@ -256,7 +256,7 @@ class FileController{
                 parentId,
                 userId
             });
-            
+
             res.status(200).json({
                 message: `Successfully uploaded ${result.files.length} file(s) in folder structure`,
                 data: result
@@ -268,7 +268,7 @@ class FileController{
             });
         }
     }
-    
+
     async allFiles(req: Request, res: Response){
         const { page, limit, skip } = getPaginationParams(req);
         const { files, total } = await fileServiceInstance.allFiles(skip, limit);
@@ -442,6 +442,208 @@ class FileController{
         res.status(200).json({
             status: "success",
             message: "File deleted successfully"
+        });
+    }
+
+    async moveFile(req: Request, res: Response) {
+        if (!req.body){
+            throw new AppError({ message: 'Request Body Missing', statusCode: 400 });
+        }
+        
+        const fileId = req.params.resourceId;
+        const { newFolderId } = req.body;
+        const userId = req.user.userId;
+
+        if (!fileId) {
+            throw new AppError({ message: 'File ID is required', statusCode: 400 });
+        }
+
+        if (!newFolderId) {
+            throw new AppError({ message: 'New folder ID is required', statusCode: 400 });
+        }
+
+        const fileData = {
+            id: fileId,
+            newFolderId,
+            userId
+        };
+
+        const movedFile = await fileServiceInstance.moveFile(fileData);
+
+        res.status(200).json({
+            status: "success",
+            message: "File moved successfully",
+            data: {
+                file: movedFile
+            }
+        });
+    }
+
+    async moveFolder(req: Request, res: Response) {
+        if (!req.body){
+            throw new AppError({ message: 'Request Body Missing', statusCode: 400 });
+        }
+        const folderId = req.params.resourceId;
+        const { newParentId } = req.body;
+        const userId = req.user.userId;
+        
+
+        if (!folderId) {
+            throw new AppError({ message: 'Folder ID is required', statusCode: 400 });
+        }
+
+        const folderData = {
+            id: folderId,
+            newParentId,
+            userId
+        };
+
+        const movedFolder = await fileServiceInstance.moveFolder(folderData);
+
+        res.status(200).json({
+            status: "success",
+            message: "Folder moved successfully",
+            data: {
+                folder: movedFolder
+            }
+        });
+    }
+
+    async copyFile(req: Request, res: Response) {
+        const fileId = req.params.resourceId;
+        const { targetFolderId } = req.body;
+        const userId = req.user.userId;
+        if (!req.body){
+            throw new AppError({message: "Missing request body of" +
+                    " targetFolderId is missing", statusCode: 400 })
+        }
+        
+        if (!req.body.targetFolderId){
+            throw new AppError({message: "targetFolderId is missing", statusCode: 400 })
+        }
+
+        if (!fileId) {
+            throw new AppError({ message: 'File ID is required', statusCode: 400 });
+        }
+
+        if (!targetFolderId) {
+            throw new AppError({ message: 'Target folder ID is required', statusCode: 400 });
+        }
+
+        const fileData = {
+            id: fileId,
+            targetFolderId,
+            userId
+        };
+
+        const copiedFile = await fileServiceInstance.copyFile(fileData);
+
+        res.status(200).json({
+            status: "success",
+            message: "File copied successfully",
+            data: {
+                file: copiedFile
+            }
+        });
+    }
+
+    async copyFolder(req: Request, res: Response) {
+        const folderId = req.params.resourceId;
+        const { targetParentId, newName } = req.body;
+        const userId = req.user.userId;
+
+        if (!folderId) {
+            throw new AppError({ message: 'Folder ID is required', statusCode: 400 });
+        }
+        
+        if (!req.body){
+            throw new AppError({message: "Missing request body of" +
+                    " targetParentId is missing", statusCode: 400 })
+        }
+        
+        if (!targetParentId){
+            throw new AppError({message: "targetParentId is missing", statusCode: 400 })
+        }
+        
+        if (!newName){
+            throw new AppError({message: "newName is missing", statusCode: 400 })
+        }
+
+        const folderData = {
+            id: folderId,
+            targetParentId,
+            userId,
+            newName
+        };
+
+        const copiedFolder = await fileServiceInstance.copyFolder(folderData);
+
+        res.status(200).json({
+            status: "success",
+            message: "Folder copied successfully",
+            data: {
+                folder: copiedFolder
+            }
+        });
+    }
+
+    async renameFile(req: Request, res: Response) {
+        const fileId = req.params.resourceId;
+        const { newFileName } = req.body;
+        const userId = req.user.userId;
+
+        if (!fileId) {
+            throw new AppError({ message: 'File ID is required', statusCode: 400 });
+        }
+
+        if (!newFileName) {
+            throw new AppError({ message: 'New file name is required', statusCode: 400 });
+        }
+
+        const fileData = {
+            id: fileId,
+            newFileName,
+            userId
+        };
+
+        const renamedFile = await fileServiceInstance.renameFile(fileData);
+
+        res.status(200).json({
+            status: "success",
+            message: "File renamed successfully",
+            data: {
+                file: renamedFile
+            }
+        });
+    }
+
+    async renameFolder(req: Request, res: Response) {
+        const folderId = req.params.resourceId;
+        const { newFolderName } = req.body;
+        const userId = req.user.userId;
+
+        if (!folderId) {
+            throw new AppError({ message: 'Folder ID is required', statusCode: 400 });
+        }
+
+        if (!newFolderName) {
+            throw new AppError({ message: 'New folder name is required', statusCode: 400 });
+        }
+
+        const folderData = {
+            id: folderId,
+            newFolderName,
+            userId
+        };
+
+        const renamedFolder = await fileServiceInstance.renameFolder(folderData);
+
+        res.status(200).json({
+            status: "success",
+            message: "Folder renamed successfully",
+            data: {
+                folder: renamedFolder
+            }
         });
     }
 }

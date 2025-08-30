@@ -134,8 +134,51 @@ class SftpConnectionPoolService {
 		});
 	}
 
-	async rename(oldRemotePath: string, newRemotePath: string): Promise<any> {
+ async rename(oldRemotePath: string, newRemotePath: string): Promise<any> {
 		return this.useClient((client) => client.rename(oldRemotePath, newRemotePath));
+	}
+
+	async copy(sourcePath: string, destinationPath: string, isDirectory: boolean = false): Promise<any> {
+		return this.useClient(async (client) => {
+			if (isDirectory) {
+				// For directories, we need to:
+				// 1. Create the destination directory
+				await client.mkdir(destinationPath, true);
+
+				// 2. List all items in the source directory
+				const items = await client.list(sourcePath);
+
+				// 3. Recursively copy each item
+				for (const item of items) {
+					const sourceItemPath = `${sourcePath}/${item.name}`;
+					const destItemPath = `${destinationPath}/${item.name}`;
+
+					if (item.type === 'd') {
+						// Recursively copy subdirectory
+						await this.copy(sourceItemPath, destItemPath, true);
+					} else {
+						// Copy file
+						const tempLocalPath = `/tmp/${item.name}`;
+						await client.get(sourceItemPath, tempLocalPath);
+						await client.put(tempLocalPath, destItemPath);
+						// Clean up temp file
+						const fs = require('fs');
+						fs.unlinkSync(tempLocalPath);
+					}
+				}
+				return true;
+			} else {
+				// For files, download to a temp location and then upload to the destination
+				const fileName = sourcePath.split('/').pop();
+				const tempLocalPath = `/tmp/${fileName}`;
+				await client.get(sourcePath, tempLocalPath);
+				await client.put(tempLocalPath, destinationPath);
+				// Clean up temp file
+				const fs = require('fs');
+				fs.unlinkSync(tempLocalPath);
+				return true;
+			}
+		});
 	}
 
 	async closePool(): Promise<void> {

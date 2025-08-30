@@ -153,7 +153,7 @@ class fileService {
 		try {
 			// Use cache for folder data with a 5-minute TTL
 			const cachedData =  await redisService.get(`folder:${folderId}`);
-			
+
 			if (cachedData) {
 				return JSON.parse(cachedData);
 			}
@@ -254,7 +254,7 @@ class fileService {
 					statusCode: 400 
 				});
 			}
-			
+
 
 			// Create a map to store created folders by path
 			const folderMap = new Map<string, any>();
@@ -414,6 +414,351 @@ class fileService {
 			return await fileRepo.accessFiles(userId, skip, limit);
 		} catch (error: any) {
 			console.error("Error fetching user files", error);
+			throw new AppError({ message: error.message, statusCode: error.statusCode || 500 });
+		}
+	}
+
+	/**
+	 * Moves a file to a different folder.
+	 * @param fileData - The data for the file to be moved.
+	 * @returns The moved file object.
+	 * @throws AppError if the file is not found or if there is an error during the move.
+	 */
+	async moveFile(fileData: any) {
+		try {
+			// Get the file to move
+			const file = await fileRepo.getFileById(fileData.id);
+			if (!file) {
+				throw new AppError({ message: "File not found", statusCode: 404 });
+			}
+
+			// Get the target folder
+			if (fileData.newFolderId) {
+				const targetFolder = await fileRepo.getFolderById(fileData.newFolderId);
+				if (!targetFolder) {
+					throw new AppError({ message: "Target folder not found", statusCode: 404 });
+				}
+
+				// Invalidate target folder cache
+				await redisService.delete(`folder:${fileData.newFolderId}`);
+			}
+
+			// Invalidate file cache
+			await redisService.delete(`file:${fileData.id}`);
+
+			// Move the file in Google Drive
+			await googleDriveRepo.moveFile({
+				fileId: fileData.id,
+				newFolderId: fileData.newFolderId
+			});
+
+			// Move the file in the database
+			const movedFile = await fileRepo.moveFile(fileData);
+
+			// Create audit log
+			await auditLogService.createAuditLog({
+				action: "MOVE",
+				targetId: fileData.id,
+				actorId: fileData.userId,
+				targetType: "FILE",
+				fileId: fileData.id,
+				folderId: fileData.newFolderId
+			});
+
+			return movedFile;
+		} catch (error: any) {
+			throw new AppError({ message: error.message, statusCode: error.statusCode || 500 });
+		}
+	}
+
+	/**
+	 * Moves a folder to a different parent folder.
+	 * @param folderData - The data for the folder to be moved.
+	 * @returns The moved folder object.
+	 * @throws AppError if the folder is not found or if there is an error during the move.
+	 */
+	async moveFolder(folderData: any) {
+		try {
+			// Get the folder to move
+			const folder = await fileRepo.getFolderById(folderData.id);
+			if (!folder) {
+				throw new AppError({ message: "Folder not found", statusCode: 404 });
+			}
+
+			// Get the target parent folder
+			if (folderData.newParentId) {
+				const targetFolder = await fileRepo.getFolderById(folderData.newParentId);
+				if (!targetFolder) {
+					throw new AppError({ message: "Target parent folder not found", statusCode: 404 });
+				}
+
+				// Invalidate target folder cache
+				await redisService.delete(`folder:${folderData.newParentId}`);
+			}
+
+			// Invalidate folder cache
+			await redisService.delete(`folder:${folderData.id}`);
+
+			// For each file in the folder, we need to move it in Google Drive
+			for (const file of folder.files || []) {
+				// Move the file in Google Drive
+				await googleDriveRepo.moveFile({
+					fileId: file.id,
+					newFolderId: folderData.newParentId
+				});
+			}
+
+			// For each subfolder, we need to recursively move it
+			for (const subfolder of folder.children || []) {
+				await this.moveFolder({
+					id: subfolder.id,
+					newParentId: folderData.newParentId,
+					userId: folderData.userId
+				});
+			}
+
+			// Move the folder in the database
+			const movedFolder = await fileRepo.renameOrMoveFolder({
+				id: folderData.id,
+				name: folder.name,
+				newParentId: folderData.newParentId
+			});
+
+			// Create audit log
+			await auditLogService.createAuditLog({
+				action: "MOVE",
+				targetId: folderData.id,
+				actorId: folderData.userId,
+				targetType: "FOLDER",
+				folderId: folderData.id
+			});
+
+			return movedFolder;
+		} catch (error: any) {
+			throw new AppError({ message: error.message, statusCode: error.statusCode || 500 });
+		}
+	}
+
+	/**
+	 * Copies a file to a different folder.
+	 * @param fileData - The data for the file to be copied.
+	 * @returns The copied file object.
+	 * @throws AppError if the file is not found or if there is an error during the copy.
+	 */
+	async copyFile(fileData: any) {
+		try {
+			// Get the file to copy
+			const file = await fileRepo.getFileById(fileData.id);
+			if (!file) {
+				throw new AppError({ message: "File not found", statusCode: 404 });
+			}
+
+			// Get the target folder
+			if (fileData.targetFolderId) {
+				const targetFolder = await fileRepo.getFolderById(fileData.targetFolderId);
+				if (!targetFolder) {
+					throw new AppError({ message: "Target folder not found", statusCode: 404 });
+				}
+
+				// Invalidate target folder cache
+				await redisService.delete(`folder:${fileData.targetFolderId}`);
+			}
+
+			// Generate a new ID for the copied file
+			const newId = fileData.newId || `${file.id}_copy_${Date.now()}`;
+
+			// Copy the file in Google Drive
+			const copiedFileResponse = await googleDriveRepo.copyFile({
+				fileId: fileData.id,
+				name: file.fileName,
+				folderId: fileData.targetFolderId
+			});
+
+			// Copy the file in the database
+			const copiedFile = await fileRepo.copyFile({
+				id: fileData.id,
+				targetFolderId: fileData.targetFolderId,
+				newId: copiedFileResponse.data.id || newId,
+				userId: fileData.userId
+			});
+
+			// Create audit log
+			await auditLogService.createAuditLog({
+				action: "COPY",
+				targetId: fileData.id,
+				actorId: fileData.userId,
+				targetType: "FILE",
+				fileId: copiedFile.id
+			});
+
+			return copiedFile;
+		} catch (error: any) {
+			throw new AppError({ message: error.message, statusCode: error.statusCode || 500 });
+		}
+	}
+
+	/**
+	 * Copies a folder to a different parent folder.
+	 * @param folderData - The data for the folder to be copied.
+	 * @returns The copied folder object.
+	 * @throws AppError if the folder is not found or if there is an error during the copy.
+	 */
+	async copyFolder(folderData: any) {
+		try {
+			// Get the folder to copy
+			const folder = await fileRepo.getFolderById(folderData.id);
+			if (!folder) {
+				throw new AppError({ message: "Folder not found", statusCode: 404 });
+			}
+
+			// Get the target parent folder
+			if (folderData.targetParentId) {
+				const targetFolder = await fileRepo.getFolderById(folderData.targetParentId);
+				if (!targetFolder) {
+					throw new AppError({ message: "Target parent folder not found", statusCode: 404 });
+				}
+
+				// Invalidate target folder cache
+				await redisService.delete(`folder:${folderData.targetParentId}`);
+			}
+
+			// Generate a new ID for the copied folder
+			const newId = folderData.newId || `${folder.id}_copy_${Date.now()}`;
+
+			// Create a new folder in Google Drive
+			const newFolderResponse = await googleDriveRepo.createFolder({
+				folderName: folderData.newName || folder.name,
+				parentId: folderData.targetParentId,
+				userId: folderData.userId
+			});
+
+			// Copy the folder in the database
+			const copiedFolder = await fileRepo.copyFolder({
+				id: folderData.id,
+				targetParentId: folderData.targetParentId,
+				newId: newFolderResponse.data.id || newId,
+				userId: folderData.userId,
+				newName: folderData.newName
+			});
+
+			// For each file in the folder, copy it to the new folder
+			for (const file of folder.files || []) {
+				await this.copyFile({
+					id: file.id,
+					targetFolderId: copiedFolder.id,
+					userId: folderData.userId
+				});
+			}
+
+			// For each subfolder, recursively copy it
+			for (const subfolder of folder.children || []) {
+				await this.copyFolder({
+					id: subfolder.id,
+					targetParentId: copiedFolder.id,
+					userId: folderData.userId
+				});
+			}
+
+			// Create audit log
+			await auditLogService.createAuditLog({
+				action: "COPY",
+				targetId: folderData.id,
+				actorId: folderData.userId,
+				targetType: "FOLDER",
+				folderId: copiedFolder.id
+			});
+
+			return copiedFolder;
+		} catch (error: any) {
+			throw new AppError({ message: error.message, statusCode: error.statusCode || 500 });
+		}
+	}
+
+	/**
+	 * Renames a file.
+	 * @param fileData - The data for the file to be renamed.
+	 * @returns The renamed file object.
+	 * @throws AppError if the file is not found or if there is an error during the rename.
+	 */
+	async renameFile(fileData: any) {
+		try {
+			// Get the file to rename
+			const file = await fileRepo.getFileById(fileData.id);
+			if (!file) {
+				throw new AppError({ message: "File not found", statusCode: 404 });
+			}
+
+			// Invalidate file cache
+			await redisService.delete(`file:${fileData.id}`);
+
+			// Rename the file in Google Drive
+			await googleDriveRepo.renameFile({
+				fileId: fileData.id,
+				newName: fileData.newFileName
+			});
+
+			// Rename the file in the database
+			const renamedFile = await fileRepo.renameFile({
+				id: fileData.id,
+				newFileName: fileData.newFileName
+			});
+
+			// Create audit log
+			await auditLogService.createAuditLog({
+				action: "UPDATE",
+				targetId: fileData.id,
+				actorId: fileData.userId,
+				targetType: "FILE",
+				fileId: fileData.id
+			});
+
+			return renamedFile;
+		} catch (error: any) {
+			throw new AppError({ message: error.message, statusCode: error.statusCode || 500 });
+		}
+	}
+
+	/**
+	 * Renames a folder.
+	 * @param folderData - The data for the folder to be renamed.
+	 * @returns The renamed folder object.
+	 * @throws AppError if the folder is not found or if there is an error during the rename.
+	 */
+	async renameFolder(folderData: any) {
+		try {
+			// Get the folder to rename
+			const folder = await fileRepo.getFolderById(folderData.id);
+			if (!folder) {
+				throw new AppError({ message: "Folder not found", statusCode: 404 });
+			}
+
+			// Invalidate folder cache
+			await redisService.delete(`folder:${folderData.id}`);
+
+			// Rename the folder in Google Drive
+			await googleDriveRepo.renameFolder({
+				folderId: folderData.id,
+				newName: folderData.newFolderName
+			});
+
+			// Rename the folder in the database
+			const renamedFolder = await fileRepo.renameOrMoveFolder({
+				id: folderData.id,
+				name: folderData.newFolderName,
+				newParentId: folder.parentId // Keep the same parent
+			});
+
+			// Create audit log
+			await auditLogService.createAuditLog({
+				action: "UPDATE",
+				targetId: folderData.id,
+				actorId: folderData.userId,
+				targetType: "FOLDER",
+				folderId: folderData.id
+			});
+
+			return renamedFolder;
+		} catch (error: any) {
 			throw new AppError({ message: error.message, statusCode: error.statusCode || 500 });
 		}
 	}

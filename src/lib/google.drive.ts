@@ -21,15 +21,48 @@ const oauth2Client = new google.auth.OAuth2(
 	REDIRECT_URL
 );
 
+// Set up credentials with refresh token
 oauth2Client.setCredentials({
 	refresh_token: REFRESH_TOKEN,
 });
 
+// Set up token refresh callback
+oauth2Client.on('tokens', (tokens) => {
+  if (tokens.refresh_token) {
+    // Store the new refresh token if provided
+    oauth2Client.setCredentials({
+      refresh_token: tokens.refresh_token
+    });
+    console.log('New refresh token received and stored');
+  }
+
+  if (tokens.access_token) {
+    // Update the access token
+    oauth2Client.setCredentials({
+      access_token: tokens.access_token,
+      refresh_token: REFRESH_TOKEN // Keep the existing refresh token
+    });
+    console.log('Access token refreshed');
+  }
+});
+
 google.options({ auth: oauth2Client });
 
+// Function to manually refresh the token
+export async function refreshAccessToken() {
+  try {
+    const { credentials } = await oauth2Client.refreshAccessToken();
+    oauth2Client.setCredentials(credentials);
+    console.log('Access token manually refreshed');
+    return true;
+  } catch (error) {
+    console.error('Error refreshing access token:', error);
+    return false;
+  }
+}
 
 const googleDrive = google.drive("v3");
-export  { googleDrive};
+export { googleDrive };
 
 
 

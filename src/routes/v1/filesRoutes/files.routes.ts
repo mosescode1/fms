@@ -12,26 +12,42 @@ import {
 } from '../../../middleware/permission';
 
 const router = Router();
+
+// Get all files and folders
+router.get("/", Authenticate, catchAsync(fileController.allFiles));
+router.get(
+	'/folders',
+	Authenticate,
+	checkRolePermission(roles.SUPER_AND_ADMIN),
+	catchAsync(fileController.allFolders)
+);
+router.get("/folders/root", Authenticate, catchAsync(fileController.getRootFolderPermissionLevel));
+
+// Get folder by ID
+router.get("/folders/:folderId", Authenticate, catchAsync(fileController.getFolderById));
+
+// Create folder and upload file
+router.post("/create/folder/:parentId?", Authenticate, catchAsync(fileController.createFolder));
+router.post("/upload/file/:parentId?", Authenticate, upload.single("file"), catchAsync(fileController.uploadFile));
+
+// Move files and folders
+// router.post("/move/file/:fileId", Authenticate, catchAsync(fileController.moveFile));
+// router.post("/move/folder/:folderId", Authenticate, catchAsync(fileController.moveFolder));
 //
-// router.get("/",Authenticate, catchAsync(fileController.allFiles));
-// router.get(
-// 	'/folders',
-// 	Authenticate,
-// 	checkRolePermission(roles.SUPER_AND_ADMIN),
-// 	catchAsync(fileController.allFolders)
-// );
-// router.get("/folders/root", Authenticate, checkRolePermission(member), checkPermissionLevel, catchAsync(fileController.getRootFolderPermissionLevel));
+// // Copy files and folders
+// router.post("/copy/file/:fileId", Authenticate, catchAsync(fileController.copyFile));
+// router.post("/copy/folder/:folderId", Authenticate, catchAsync(fileController.copyFolder));
 //
-// router.get("/folders{/:folderId}", Authenticate, checkRolePermission(adminAndUser),checkReadAccess, catchAsync(fileController.getFolderById));
-// router.post("/create/folder{/:parentId}",Authenticate,checkRolePermission(adminAndUser), checkWriteAccess, catchAsync(fileController.createFolder));
-// router.post("/upload/file{/:parentId}",Authenticate, upload.single("file"),checkRolePermission(adminAndUser), checkWriteAccess,  catchAsync(fileController.uploadFile));
+// // Rename files and folders
+// router.post("/rename/file/:fileId", Authenticate, catchAsync(fileController.renameFile));
+// router.post("/rename/folder/:folderId", Authenticate, catchAsync(fileController.renameFolder));
 //
 // // Mark as deletion
-// router.delete("/folders{/:folderId}", Authenticate, checkRolePermission(adminAndUser), checkPermissionLevel, checkWriteAccess,  catchAsync(fileController.userDeleteFolder));
-// router.delete("/file{/:fileId}", Authenticate, checkRolePermission(adminAndUser), checkPermissionLevel, checkWriteAccess,  catchAsync(fileController.userDeleteFile));
+// router.delete("/folders/:folderId", Authenticate, catchAsync(fileController.userDeleteFolder));
 
-// Permanent deletion and restoration of file
-// router.get("/file/restore{/:fileId}", Authenticate, checkRolePermission(adminOnly),  catchAsync(fileController.userRestoreFile));
-// router.delete("/file/delete{/:fileId}", Authenticate, checkRolePermission(adminOnly),  catchAsync(fileController.userDeleteFile));
+// Uncomment and implement these as needed
+// router.delete("/file/:fileId", Authenticate, catchAsync(fileController.userDeleteFile));
+// router.get("/file/restore/:fileId", Authenticate, catchAsync(fileController.userRestoreFile));
+// router.delete("/file/delete/:fileId", Authenticate, catchAsync(fileController.userDeleteFile));
 
 export default router;

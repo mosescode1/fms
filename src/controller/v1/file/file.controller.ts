@@ -162,7 +162,240 @@ class FileController{
         res.status(200).json({
             status: "success",
             message: "Folder deleted successfully"
-            
+
+        });
+    }
+
+    async moveFile(req: Request, res: Response) {
+        const fileId = req.params.fileId;
+        const { newFolderId } = req.body;
+        const userId = req.user.userId;
+
+        if (!fileId) {
+            throw new AppError({ message: 'File ID is required', statusCode: 400 });
+        }
+
+        if (!newFolderId) {
+            throw new AppError({ message: 'New folder ID is required', statusCode: 400 });
+        }
+
+        const fileData = {
+            id: fileId,
+            newFolderId,
+            userId
+        };
+
+        const movedFile = await fileServiceInstance.moveFile(fileData);
+
+        // Add to audit log
+        const auditLogData = {
+            action: "MOVE",
+            targetId: fileId,
+            actorId: userId,
+            targetType: "FILE",
+            fileId: fileId,
+        };
+        // await auditLogService.createAuditLog(auditLogData);
+
+        res.status(200).json({
+            status: "success",
+            message: "File moved successfully",
+            data: {
+                file: movedFile
+            }
+        });
+    }
+
+    async moveFolder(req: Request, res: Response) {
+        const folderId = req.params.folderId;
+        const { newParentId } = req.body;
+        const userId = req.user.userId;
+
+        if (!folderId) {
+            throw new AppError({ message: 'Folder ID is required', statusCode: 400 });
+        }
+
+        const folderData = {
+            id: folderId,
+            newParentId,
+            userId
+        };
+
+        const movedFolder = await fileServiceInstance.moveFolder(folderData);
+
+        // Add to audit log
+        const auditLogData = {
+            action: "MOVE",
+            targetId: folderId,
+            actorId: userId,
+            targetType: "FOLDER",
+            folderId: folderId,
+        };
+        // await auditLogService.createAuditLog(auditLogData);
+
+        res.status(200).json({
+            status: "success",
+            message: "Folder moved successfully",
+            data: {
+                folder: movedFolder
+            }
+        });
+    }
+
+    async copyFile(req: Request, res: Response) {
+        const fileId = req.params.fileId;
+        const { targetFolderId } = req.body;
+        const userId = req.user.userId;
+
+        if (!fileId) {
+            throw new AppError({ message: 'File ID is required', statusCode: 400 });
+        }
+
+        if (!targetFolderId) {
+            throw new AppError({ message: 'Target folder ID is required', statusCode: 400 });
+        }
+
+        const fileData = {
+            id: fileId,
+            targetFolderId,
+            userId
+        };
+
+        const copiedFile = await fileServiceInstance.copyFile(fileData);
+
+        // Add to audit log
+        const auditLogData = {
+            action: "COPY",
+            targetId: fileId,
+            actorId: userId,
+            targetType: "FILE",
+            fileId: copiedFile.id,
+        };
+        // await auditLogService.createAuditLog(auditLogData);
+
+        res.status(200).json({
+            status: "success",
+            message: "File copied successfully",
+            data: {
+                file: copiedFile
+            }
+        });
+    }
+
+    async copyFolder(req: Request, res: Response) {
+        const folderId = req.params.folderId;
+        const { targetParentId, newName } = req.body;
+        const userId = req.user.userId;
+
+        if (!folderId) {
+            throw new AppError({ message: 'Folder ID is required', statusCode: 400 });
+        }
+
+        const folderData = {
+            id: folderId,
+            targetParentId,
+            userId,
+            newName
+        };
+
+        const copiedFolder = await fileServiceInstance.copyFolder(folderData);
+
+        // Add to audit log
+        const auditLogData = {
+            action: "COPY",
+            targetId: folderId,
+            actorId: userId,
+            targetType: "FOLDER",
+            folderId: copiedFolder.id,
+        };
+        // await auditLogService.createAuditLog(auditLogData);
+
+        res.status(200).json({
+            status: "success",
+            message: "Folder copied successfully",
+            data: {
+                folder: copiedFolder
+            }
+        });
+    }
+
+    async renameFile(req: Request, res: Response) {
+        const fileId = req.params.fileId;
+        const { newFileName } = req.body;
+        const userId = req.user.userId;
+
+        if (!fileId) {
+            throw new AppError({ message: 'File ID is required', statusCode: 400 });
+        }
+
+        if (!newFileName) {
+            throw new AppError({ message: 'New file name is required', statusCode: 400 });
+        }
+
+        const fileData = {
+            id: fileId,
+            newFileName,
+            userId
+        };
+
+        const renamedFile = await fileServiceInstance.renameFile(fileData);
+
+        // Add to audit log
+        const auditLogData = {
+            action: "UPDATE",
+            targetId: fileId,
+            actorId: userId,
+            targetType: "FILE",
+            fileId: fileId,
+        };
+        // await auditLogService.createAuditLog(auditLogData);
+
+        res.status(200).json({
+            status: "success",
+            message: "File renamed successfully",
+            data: {
+                file: renamedFile
+            }
+        });
+    }
+
+    async renameFolder(req: Request, res: Response) {
+        const folderId = req.params.folderId;
+        const { newFolderName } = req.body;
+        const userId = req.user.userId;
+
+        if (!folderId) {
+            throw new AppError({ message: 'Folder ID is required', statusCode: 400 });
+        }
+
+        if (!newFolderName) {
+            throw new AppError({ message: 'New folder name is required', statusCode: 400 });
+        }
+
+        const folderData = {
+            id: folderId,
+            newFolderName,
+            userId
+        };
+
+        const renamedFolder = await fileServiceInstance.renameFolder(folderData);
+
+        // Add to audit log
+        const auditLogData = {
+            action: "UPDATE",
+            targetId: folderId,
+            actorId: userId,
+            targetType: "FOLDER",
+            folderId: folderId,
+        };
+        // await auditLogService.createAuditLog(auditLogData);
+
+        res.status(200).json({
+            status: "success",
+            message: "Folder renamed successfully",
+            data: {
+                folder: renamedFolder
+            }
         });
     }
 }
