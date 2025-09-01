@@ -1,0 +1,357 @@
+{
+  "info": {
+    "_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "name": "File Management System - File Operations",
+    "description": "A collection for testing file and folder operations in the File Management System",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "description": "Endpoints for authentication",
+      "item": [
+        {
+          "name": "Admin Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"admin@example.com\",\n    \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Login as an admin user to get an authentication token"
+          },
+          "response": []
+        },
+        {
+          "name": "User Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"user@example.com\",\n    \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/member/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "member",
+                "login"
+              ]
+            },
+            "description": "Login as a regular user to get an authentication token"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Move Operations",
+      "description": "Endpoints for moving files and folders",
+      "item": [
+        {
+          "name": "Move File",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"newFolderId\": \"folder-id-to-move-to\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/files/move/file/{{fileId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "files",
+                "move",
+                "file",
+                "{{fileId}}"
+              ]
+            },
+            "description": "Move a file to a different folder"
+          },
+          "response": []
+        },
+        {
+          "name": "Move Folder",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"newParentId\": \"parent-folder-id-to-move-to\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/files/move/folder/{{folderId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "files",
+                "move",
+                "folder",
+                "{{folderId}}"
+              ]
+            },
+            "description": "Move a folder to a different parent folder"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Copy Operations",
+      "description": "Endpoints for copying files and folders",
+      "item": [
+        {
+          "name": "Copy File",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"targetFolderId\": \"folder-id-to-copy-to\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/files/copy/file/{{fileId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "files",
+                "copy",
+                "file",
+                "{{fileId}}"
+              ]
+            },
+            "description": "Copy a file to a different folder"
+          },
+          "response": []
+        },
+        {
+          "name": "Copy Folder",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"targetParentId\": \"parent-folder-id-to-copy-to\",\n    \"newName\": \"new-folder-name\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/files/copy/folder/{{folderId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "files",
+                "copy",
+                "folder",
+                "{{folderId}}"
+              ]
+            },
+            "description": "Copy a folder to a different parent folder with a new name"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Rename Operations",
+      "description": "Endpoints for renaming files and folders",
+      "item": [
+        {
+          "name": "Rename File",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"newFileName\": \"new-file-name.ext\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/files/rename/file/{{fileId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "files",
+                "rename",
+                "file",
+                "{{fileId}}"
+              ]
+            },
+            "description": "Rename a file"
+          },
+          "response": []
+        },
+        {
+          "name": "Rename Folder",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"newFolderName\": \"new-folder-name\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/files/rename/folder/{{folderId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "files",
+                "rename",
+                "folder",
+                "{{folderId}}"
+              ]
+            },
+            "description": "Rename a folder"
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string",
+      "description": "Base URL of the API"
+    },
+    {
+      "key": "authToken",
+      "value": "",
+      "type": "string",
+      "description": "Authentication token received after login"
+    },
+    {
+      "key": "fileId",
+      "value": "",
+      "type": "string",
+      "description": "ID of the file to operate on"
+    },
+    {
+      "key": "folderId",
+      "value": "",
+      "type": "string",
+      "description": "ID of the folder to operate on"
+    }
+  ]
+}

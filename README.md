@@ -44,6 +44,18 @@ Example folder structure format:
 }
 ```
 
+## Testing File Operations
+
+A Postman collection is available for testing file and folder operations:
+
+- [File Operations Postman Collection](./examples/file-operations-postman-collection.json)
+- [Usage Instructions](./examples/file-operations-postman-readme.md)
+
+This collection includes requests for:
+- Moving files and folders
+- Copying files and folders
+- Renaming files and folders
+
 ## Features
 
 - File and folder management
